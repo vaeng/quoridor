@@ -123,6 +123,43 @@
              x))
        Players))
 
+; PlayerList id -> PlayerList
+; remove a wall from a certain player
+(define (substractWall Players id)
+  (map (lambda (x)
+         (if (equal? (player-id x) id)
+             (make-player id (player-cell x) (sub1 (player-remaining-walls x)))
+             x))
+       Players))
+
+; WorldState id -> WorldState
+; change the current-player
+(define (changeCurrentPlayer ws id)
+  (make-ws (ws-players ws)
+           (ws-walls ws)
+           id
+           (ws-gamestate ws)))
+
+; WorldState id -> WorldState
+; change the game-state
+(define (changeGameState ws newstate)
+  (make-ws (ws-players ws)
+           (ws-walls ws)
+           (ws-current-player ws)
+           newstate))
+
+
+; WorldState cell orientation id -> WorldState
+; Add a wall from player with id on the board at the north-west corner of cell
+; with the given orientation
+(define (addWall ws cell orientation id)
+  (make-ws
+   (substractWall (ws-players ws) id) ; update player's remaining walls
+   (cons (make-wall cell orientation) (ws-walls ws)) ; add wall to worldstate
+   (ws-current-player ws) ;keep-current-player
+   (ws-gamestate ws))) ; keep-gamestate
+           
+
 
 ;  ######                                                     
 ;  #     # ###### #    # #####  ###### #####  # #    #  ####  
@@ -203,6 +240,8 @@
    (cond
      [(equal? (wall-orientation wall) "vertical") WALL_VERT]
      [(equal? (wall-orientation wall) "horizontal") WALL_HORZ]
+     [(not (member (wall-orientation wall) '("vertical" "horizontal")))
+      (raise (string-append "faulty wall orientation: " (wall-orientation wall)) #t)]
      )
     x y
    image)))
@@ -210,13 +249,13 @@
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
 (define (render-walls walls image)
-  ((apply compose (map (lambda (x) (curry render-wall x)) (ws-walls test-ws))) image))
+  ((apply compose (map (lambda (x) (curry render-wall x)) walls)) image))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the state, where the player is active
 (define (render-active-game ws)
   ((compose
-    (curry render-walls (ws-players ws))
+    (curry render-walls (ws-walls ws))
     (curry render-players (ws-players ws)))
    (render-empty-board)))
 
