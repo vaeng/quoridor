@@ -3,6 +3,24 @@
 (require 2htdp/universe)
 (require test-engine/racket-tests)
 
+
+;▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
+;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+;▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌
+;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌
+;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌
+;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌
+;▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░█▀▀▀▀█░█▀▀      ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▀▀▀▀█░█▀▀ 
+;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌       ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌  
+; ▀▀▀▀▀▀█░█▀▀ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌  ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌ 
+;        ▐░▌  ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌
+;         ▀    ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀ 
+                                                                                                        
+
+;; Banner/Electronic: https://www.coolgenerator.com/ascii-text-generator
+
+
+
 ;  #####  ####### ######  #     #  #####  ####### #     # ######  #######  #####  
 ;  #     #    #    #     # #     # #     #    #    #     # #     # #       #     # 
 ;  #          #    #     # #     # #          #    #     # #     # #       #       
@@ -18,8 +36,7 @@
 ; interpretation players on the board, with walls and the current active player.
 ; when there are no walls on the board, the list of walls can be empty.
 ; the list of players has as many entries as there are players.
-; the remaining walls can be calculated from the length of the walls list.
-; A gamestate is used too navigate menus, etc.
+; A gamestate is used to navigate menus, etc.
 
 (define-struct wall [cell orientation])
 ; A wall is a structure
@@ -27,11 +44,11 @@
 ; Interpretation a wall with the orientation horizontal or vertical that has
 ; it's north-western corner at the north-western corner of the game-field cell.
 
-(define-struct player [id cell])
+(define-struct player [id cell remaining-walls])
 ; A player is a structure
 ; (make-player ID cell number)
 ; Interpretation a player has an unique id from 1 to 4, a current field,
-; that the player occupies.
+; that the player occupies. remaining-walls is a positve number
 
 (define-struct cell [x y])
 ; A cell is a structure
@@ -102,7 +119,7 @@
 (define (changeCell Players cell id)
   (map (lambda (x)
          (if (equal? (player-id x) id)
-             (make-player id cell)
+             (make-player id cell (player-remaining-walls x))
              x))
        Players))
 
@@ -156,14 +173,20 @@
   (let ([x (first (cell->NWCorner (player-cell player)))]
         [y (second (cell->NWCorner (player-cell player)))])
   (overlay/xy
-   (cond
-     [(equal? (player-id player) 1) PLAYER1]
-     [(equal? (player-id player) 2) PLAYER2]
-     [(equal? (player-id player) 3) PLAYER3]
-     [(equal? (player-id player) 4) PLAYER4]
-     )
+   (render-token (player-id player) (player-remaining-walls player))
    x y
    image)))
+
+;; id, remaining-walls -> Image
+;; renders the player token and the number of remaining walls
+(define (render-token id remaining-walls)
+  (overlay (text (number->string remaining-walls) 30 "black")
+           (cond
+     [(equal? id 1) PLAYER1]
+     [(equal? id 2) PLAYER2]
+     [(equal? id 3) PLAYER3]
+     [(equal? id 4) PLAYER4]
+     )))
 
 ;; PlayersList Image -> Image
 ;; lays all players found in the players list onto another image
@@ -270,8 +293,8 @@
 ; with a list of two players like in gamestate 2:
 ; .
 (define test-players
-  (list (make-player 1 (make-cell 0 2))
-        (make-player 2 (make-cell 4 1))))
+  (list (make-player 1 (make-cell 0 2) 10)
+        (make-player 2 (make-cell 4 1) 10)))
 
 (define test-walls
   (list (make-wall (make-cell 1 1) "vertical")
