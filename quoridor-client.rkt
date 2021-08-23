@@ -2,7 +2,7 @@
 (require 2htdp/image)
 (require 2htdp/universe)
 (require test-engine/racket-tests)
-
+(require racket/struct)
 
 ; ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
 ;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
@@ -30,7 +30,21 @@
 ;   #####     #    #     #  #####   #####     #     #####  #     # #######  #####                                                                 
 
 
-(define-struct ws [players walls current-player gamestate])
+(define-struct ws [players walls current-player gamestate]
+      #:methods gen:custom-write
+    [(define write-proc
+       (make-constructor-style-printer
+        (lambda (obj) 'ws)
+        (lambda (obj)
+          (list (unquoted-printing-string "#:players")
+                (ws-players obj)
+                (unquoted-printing-string "#:walls")
+                (ws-walls obj)
+                (unquoted-printing-string "#:current-player")
+                (ws-current-player obj)
+                (unquoted-printing-string "#:gamestate")
+                (ws-gamestate obj)))))])
+
 ; A ws is a strucutre
 ; (make-ws (list player ...) (list wall ...) id gamestate)
 ; interpretation players on the board, with walls and the current active player.
@@ -38,19 +52,41 @@
 ; the list of players has as many entries as there are players.
 ; A gamestate is used to navigate menus, etc.
 
-(define-struct wall [cell orientation])
+(define-struct wall [cell orientation]
+    #:methods gen:custom-write
+  [(define write-proc
+     (make-constructor-style-printer
+      (lambda (obj) 'wall)
+      (lambda (obj) (list (wall-cell obj) (wall-orientation obj)))))])
 ; A wall is a structure
 ; (make-wall cell orientation)
 ; Interpretation a wall with the orientation horizontal or vertical that has
 ; it's north-western corner at the north-western corner of the game-field cell.
 
-(define-struct player [id cell remaining-walls])
+(define-struct player [id cell remaining-walls]
+      #:methods gen:custom-write
+    [(define write-proc
+       (make-constructor-style-printer
+        (lambda (obj) 'player)
+        (lambda (obj)
+          (list (unquoted-printing-string "#:id")
+                (player-id obj)
+                (unquoted-printing-string "#:cell")
+                (player-cell obj)
+                (unquoted-printing-string "#:remaining-walls")
+                (player-remaining-walls obj)))))])
 ; A player is a structure
 ; (make-player ID cell number)
 ; Interpretation a player has an unique id from 1 to 4, a current field,
 ; that the player occupies. remaining-walls is a positve number
 
-(define-struct cell [x y])
+(define-struct cell [x y]
+  #:methods gen:custom-write
+  [(define write-proc
+     (make-constructor-style-printer
+      (lambda (obj) 'cell)
+      (lambda (obj) (list (cell-x obj) (cell-y obj)))))])
+
 ; A cell is a structure
 ; (make-cell number number)
 ; Interpretation a cell is a field on the game board, numbered from 0 to 8
@@ -124,19 +160,19 @@
 
 ; PlayerList cell id -> PlayerList
 ; Change the cell of player with certain id
-(define (changeCell Players cell id)
+(define (changeCell players cell id)
   (map (lambda (x)
          (if (equal? (player-id x) id)
              (make-player id cell (player-remaining-walls x))
              x))
-       Players))
+       players))
 
 ; PlayerList id -> Cell 
 ; returns current Cell of PlayerID given all Players 
-(define (player_pos Players id)
+(define (player_pos players id)
   (player-cell (car (filter
                      (lambda (x) (equal? (player-id x) id))
-                     Players))))
+                     players))))
 
 
 ; Cell-x Cell-y WallList -> Boolean
@@ -176,39 +212,43 @@
 
 ; StartCell GoalCell WallList -> Boolean
 ; checks if a cell with the given position is a valid destination
-(define (walkableCell? startCell goalCell walls)
-  (if (validCell? goalCell)
-      (not (wallsBetween? startCell goalCell walls))
-      #f))
+(define (walkableCell? startCell goalCell players walls) 
+(if (and (validCell? goalCell) (not (playerPosition? goalCell players)))      (not (wallsBetween? startCell goalCell walls))      #f))
+
+; Cell PlayerList -> Boolean
+; checks if a Player is on the given Cell
+(define (playerPosition? goalCell players) 
+(ormap identity (map (lambda (cell) (cell=? cell goalCell)) (map (lambda (player)(player-cell player)) players)))) 
+
 
 ; PlayerList id WorldState -> CellList
 ; calculates possible moves for a given PlayerId
-(define (possibleCells Players id ws)
-  (let ([x (cell-x (player_pos Players id))]
-        [y (cell-y (player_pos Players id))]
+(define (possibleCells players id ws)
+  (let ([x (cell-x (player_pos players id))]
+        [y (cell-y (player_pos players id))]
         [walls (ws-walls ws)])
-    (append [if (walkableCell? (player_pos Players id)
-                               (make-cell x (add1 y)) walls)
+    (append [if (walkableCell? (player_pos players id)
+                               (make-cell x (add1 y)) players walls)
                 (list (make-cell x (add1 y))) '()]
-            [if (walkableCell? (player_pos Players id)
-                               (make-cell x (sub1 y)) walls)
+            [if (walkableCell? (player_pos players id)
+                               (make-cell x (sub1 y)) players walls)
                 (list (make-cell x (sub1 y))) '()]
-            [if (walkableCell? (player_pos Players id)
-                               (make-cell (add1 x) y) walls)
+            [if (walkableCell? (player_pos players id)
+                               (make-cell (add1 x) y) players walls)
                 (list (make-cell (add1 x) y)) '()]
-            [if (walkableCell? (player_pos Players id)
-                               (make-cell (sub1 x) y) walls)
+            [if (walkableCell? (player_pos players id)
+                               (make-cell (sub1 x) y) players walls)
                 (list (make-cell (sub1 x) y)) '()]
             ))) 
 
 ; PlayerList id -> PlayerList
 ; remove a wall from a certain player
-(define (substractWall Players id)
+(define (substractWall players id)
   (map (lambda (x)
          (if (equal? (player-id x) id)
              (make-player id (player-cell x) (sub1 (player-remaining-walls x)))
              x))
-       Players))
+       players))
 
 ; WorldState id -> WorldState
 ; change the current-player
@@ -226,12 +266,79 @@
            (ws-current-player ws)
            newstate))
 
+; wall wall -> bool
+; checks if walls are the same
+(define (wall=? wall1 wall2)
+  (and (and (cell=? (wall-cell wall1) (wall-cell wall2))
+            (string=? (wall-orientation wall1) (wall-orientation wall2)))))
+
+; (list wall ... ) wall -> bool
+; returns #t if wall is in list of walls
+(define (wallInList? lst wall)
+  (memf (curry wall=? wall) lst))
+; cell direction -> cell
+; returns the cell in the direction of the origin cell
+; direction is one of S, N, W, E for south, north, etch
+(define (neighbour cell direction)
+  (let ([x (cell-x cell)]
+        [y (cell-y cell)])
+  (cond
+    [(string=? direction "N") (make-cell x       (sub1 y))]
+    [(string=? direction "S") (make-cell x       (add1 y))]
+    [(string=? direction "E") (make-cell (add1 x) y)]
+    [(string=? direction "W") (make-cell (sub1 x) y)]
+    [(string=? direction "NE") (make-cell (add1 x) (sub1 y))]
+    [(string=? direction "SW") (make-cell (sub1 x) (add1 y))]
+    )))
+
 ; walls players id -> bool
 ; will check if the player can put a wall at the given point
-(define (wallOK? walls players id)
-  (if (< 0
-         (player-remaining-walls (car (filter (lambda (x) (equal? id (player-id x))) players))))
-       #t #f))
+(define (wallOK? walls players cell orientation id)
+  (and 
+   ; remaining-walls sufficient?
+  (< 0
+     (player-remaining-walls (car (filter (lambda (x) (equal? id (player-id x))) players))))
+      
+  ; no overlapping walls
+  (and
+    ; direct copy of existing wall
+    (not (wallInList? walls (make-wall cell orientation)))
+    ; horizontal
+    (cond
+      [(string=? "horizontal" orientation)
+       (and 
+        ; not overlapping right side of horz. wall
+        (not (wallInList? walls (make-wall (neighbour cell "W") "horizontal")))
+        ; not overlapping left side of another horz. wall
+        (not (wallInList? walls (make-wall (neighbour cell "E") "horizontal")))
+        ; not bridging over a verical wall
+        (not (wallInList? walls (make-wall (neighbour cell "NE") "vertical")))
+       )]
+      [(string=? "vertical" orientation)
+       (and 
+        ; not overlapping top side of vert. wall
+        (not (wallInList? walls (make-wall (neighbour cell "S") "vertical")))
+        ; not overlapping bottom side of another vert. wall
+        (not (wallInList? walls (make-wall (neighbour cell "N") "vertical")))
+        ; not bridging over a horz. wall
+        (not (wallInList? walls (make-wall (neighbour cell "SW") "horizontal")))
+       )]
+      
+    )
+  )
+  ; boarder walls
+  (and
+   ; no horz. walls in the first row
+   (< 0 (cell-y cell))
+   ; no horz. walls in the last row
+   (< (cell-y cell) BOARD_SIZE)
+   ; no horz. walls in the last row, extending over the board
+   (< (cell-x cell) (sub1 BOARD_SIZE))
+   ; no vert. walls in the last row, extending over the board
+   (< (cell-y cell) (sub1 BOARD_SIZE))
+   )
+
+  ))
 
 
 ; WorldState cell orientation id -> WorldState
@@ -240,7 +347,7 @@
 ; will not place wall, if player has no more walls left, or wall is already
 ; in place
 (define (addWall ws cell orientation id)
-  (if (wallOK? (ws-walls ws) (ws-players ws) id)
+  (if (wallOK? (ws-walls ws) (ws-players ws) cell orientation  id)
       (make-ws
        (substractWall (ws-players ws) id) ; update player's remaining walls
        (cons (make-wall cell orientation) (ws-walls ws)) ; add wall to worldstate
@@ -249,12 +356,21 @@
       ws) 
      )
 
+; cell cell -> bool
+; checks if cells are the same
+(define (cell=? cell1 cell2)
+  (and (and (= (cell-x cell1) (cell-x cell2))
+            (= (cell-y cell1) (cell-y cell2)))))
+
+; (list cell ... ) cell -> bool
+; returns #t if cell is in list of cells
+(define (cellInList? lst movcell)
+  (memf (curry cell=? movcell) lst))
+
 ; Worldstate id cell -> bool
 ; will check if the cell is okay to move the player
 (define (moveOK? ws movcell id)
-         (memf (lambda (posscell) (and (= (cell-x posscell) (cell-x movcell))
-                                       (= (cell-y posscell) (cell-y movcell))))
-                 (possibleCells (ws-players ws) id ws)))
+         (cellInList? (possibleCells (ws-players ws) id ws) movcell))
          
 ; WorldState cell id -> Worldstate
 ; moves the player with the respective id to the given cell
@@ -264,6 +380,72 @@
                     (ws-walls ws)
                     (ws-current-player ws) (ws-gamestate ws))
          ws))
+
+; cell id -> number
+; returns the distance (without walls) from the cell
+; to the goal area of the player. A cell on the
+; finish line has the return value 0
+; 1: to Bottom
+; 3: to Top
+; 2: to Right
+; 4: to Left
+(define (directDistance cell id)
+  (cond
+    [(= id 1) (- (sub1 BOARD_SIZE) (cell-y cell))]
+    [(= id 2) (cell-y cell)]
+    [(= id 3) (- (sub1 BOARD_SIZE) (cell-x cell))]
+    [(= id 4) (cell-x cell)]
+    )
+  )
+
+; (list cell) (list cell) -> (list cell)
+; combines two lists of cells, so that only unique cells remain
+(define (combineCellLists xa xb)
+  (cond [(empty? xa) xb]
+        [(empty? xb) xa]
+        [(cellInList? xb (car xa)) (combineCellLists (cdr xa) xb)]
+        [else (combineCellLists (cdr xa) (append xb (list (car xa))))])
+  )
+
+; (list cell) cell -> (list cell)
+; removes a cell from a list
+(define (removeCellFromList cell lst)
+  (filter (curry (negate cell=?) cell) lst))
+
+
+; Worldstate id -> bool
+; returns false if a certain player can'r reach its goal line
+(define (wayNotBlocked? ws id candidates checked-candidates)
+  (if (empty? candidates) #f
+  (let* ([current (car (sort candidates #:key (curryr directDistance id) <))]
+         [candidates-minus-current (removeCellFromList current candidates)]
+         [new-state  (movePlayer ws current id)]
+         [pos-candidates (possibleCells (ws-players new-state) id new-state)]
+         [new-candidates (remove* checked-candidates pos-candidates cell=?)]
+         [new-checked-candidates (combineCellLists checked-candidates (list current))]
+         [next-candidates (combineCellLists candidates-minus-current new-candidates)])
+    (if (= 0 (directDistance current id))
+        #t
+        (wayNotBlocked? new-state id next-candidates new-checked-candidates))
+  )))
+
+; WorldState -> bool
+; returns false if there is not at list one way every player in this configuration to reach the
+; finish area of the respective player. 
+(define (validConfig? ws)
+  (let ([Players (ws-players ws)])
+  (and 
+  ; check if all ways are clear:      
+  (and (or (< (length (ws-players ws)) 1) (wayNotBlocked? ws 1 (list (player_pos Players 1)) '()))
+       (or (< (length (ws-players ws)) 2) (wayNotBlocked? ws 2 (list (player_pos Players 2)) '()))
+       (or (< (length (ws-players ws)) 3) (wayNotBlocked? ws 3 (list (player_pos Players 3)) '()))
+       (or (< (length (ws-players ws)) 4) (wayNotBlocked? ws 4 (list (player_pos Players 4)) '()))
+       )
+  ; check if amounts of walls is correct:
+  (= MAX_WALLS
+     (+ (length (ws-walls ws)) ; build walls
+        (apply + (map player-remaining-walls (ws-players ws))))) ; remaining-walls from players
+  )))
 
 
 
@@ -325,13 +507,13 @@
          [horz_finish (apply beside (map (lambda (x) FIN_MOVE) (range BOARD_SIZE)))]
          [anchor_cell
          (cond [(= id 1) (make-cell 0 8)]
-               [(= id 2) (make-cell 8 0)]
-               [(= id 3) (make-cell 0 0)]
+               [(= id 2) (make-cell 0 0)]
+               [(= id 3) (make-cell 8 0)]
                [(= id 4) (make-cell 0 0)]
                )]
          [finish_line
-          (cond [(or (= id 1) (= id 3)) horz_finish]
-                [(or (= id 2) (= id 4)) vert_finish]
+          (cond [(or (= id 1) (= id 2)) horz_finish]
+                [(or (= id 3) (= id 4)) vert_finish]
                 )]
         )
     (overlay/xy finish_line (cell->NWCorner-x anchor_cell) (cell->NWCorner-y anchor_cell) image)
@@ -549,26 +731,50 @@
 ; with a list of two players like in gamestate 2:
 ; .
 (define test-players
-  (list (make-player 1 (make-cell 3 6) 10)
-        (make-player 2 (make-cell 4 1) 10)
-        (make-player 3 (make-cell 6 2) 10)))
+  (list (make-player 1 (make-cell 3 6) 5)
+        (make-player 2 (make-cell 4 1) 7)
+        (make-player 3 (make-cell 6 2) 5)))
 
 (define test-walls
   (list (make-wall (make-cell 1 1) "vertical")
         (make-wall (make-cell 5 0) "vertical")
         (make-wall (make-cell 3 2) "horizontal")))
 
+; let's say it's the turn of player 1
+(define test-ws (make-ws test-players test-walls 2 "main-menu"))
+
 (define new-game-4
   (make-ws (list
             (make-player 1 (make-cell 4 0) 5)
-            (make-player 2 (make-cell 0 4) 5)
-            (make-player 3 (make-cell 4 8) 5)
+            (make-player 2 (make-cell 4 8) 5)
+            (make-player 3 (make-cell 0 4) 5)
             (make-player 4 (make-cell 8 4) 5))
            '()
            1
            "active-game"))
 
-; let's say it's the turn of player 1
-(define test-ws (make-ws test-players test-walls 2 "main-menu"))
+(define almost-won-2
+  (make-ws (list
+            (make-player 1 (make-cell 7 7) 8)
+            (make-player 2 (make-cell 4 8) 10))
+           (list (make-wall (make-cell 7 7) "horizontal")
+                 (make-wall (make-cell 7 7) "vertical")
+                 )
+           1
+           "active-game"))
+
+(define player-1-blocked
+  (make-ws (list
+            (make-player 1 (make-cell 7 7) 8)
+            (make-player 2 (make-cell 4 8) 10))
+           (list (make-wall (make-cell 7 7) "horizontal")
+                 (make-wall (make-cell 7 8) "horizontal")
+                 (make-wall (make-cell 7 7) "vertical")
+                 )
+           1
+           "active-game"))
+
+
 
 (main new-game-4)
+
