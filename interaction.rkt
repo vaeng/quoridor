@@ -76,7 +76,7 @@
                                                     (cond
                                                       [(= 0 (cell-y clicked-cell)) 0]
                                                       [else (+ (cell->NWCorner-y clicked-cell)
-                                                       (/ WALL_THICKNESS 2))])
+                                                       (/ (image-height WALL_HORZ) 2))])
                                                     
                                                     (cond
                                                       [(or
@@ -96,7 +96,7 @@
                                       (make-special (cond
                                                       [(= 0 (cell-x clicked-cell)) 0]
                                                       [else (+ (cell->NWCorner-x clicked-cell)
-                                                       (/ WALL_THICKNESS 2))])                                       
+                                                       (/ (image-width WALL_VERT) 2))])                                       
                                                     (cell->NWCorner-y clicked-cell)
                                                     (cond
                                                       [(or

@@ -166,7 +166,7 @@
         (make-wall (make-cell 5 0) "vertical")
         (make-wall (make-cell 3 2) "horizontal")))
 
-(define test-ws (make-ws test-players test-walls 1 "main-menu" null))
+(define test-ws (make-ws test-players test-walls 1 "active-game" null))
 
 ; test worldstates
 (define almost-won-2
@@ -184,11 +184,14 @@
                  (make-wall (make-cell 7 7) "vertical"))
            1 "active-game" null))
 
+
+#|
 ;ausgabe spielfeld im fenster
 (define (create-world worldname)
   (big-bang test-ws
     [to-draw render-state]
     [on-mouse mouse-action]
+    [on-tick update-frame]
     [on-key key-press]
     [register LOCALHOST]
     [state #f]
@@ -201,8 +204,8 @@
 ;;Macht zwei Welten auf
 (launch-many-worlds 
   (create-world "X")
-  (create-world "O")
+ ; (create-world "O")
  ; (create-world "B")
  ; (create-world "C")
   )
-
+|#

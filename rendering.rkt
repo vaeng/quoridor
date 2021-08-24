@@ -2,6 +2,7 @@
 
 
 (provide (combine-out render-state
+                      update-frame
                       TILE_SIZE
                       BOARD_SIZE
                       MOVE_OK
@@ -52,14 +53,19 @@
 (define TILE
   (makeTile "grey"))
 
+(define POS_MOVE_COL "Alice Blue")
+
 (define POS_MOVE
-  (makeTile "Alice Blue"))
+  (makeTile POS_MOVE_COL))
+
+(define PASSIVE_TILE
+  (makeTile BACKGROUND_COLOR))
 
 (define FIN_MOVE
   (makeTile "Pale Green"))
 
 (define (playerform color)
-  (center-pinhole (pulled-regular-polygon 50 5 1/2 -10 "solid" color)))
+  (center-pinhole (circle 50 "solid" color)))
   
 
 (define (playertoken_prefab color)
@@ -83,7 +89,13 @@
   (rotate 90 (playertoken_prefab "purple")))
 
 (define WALL_VERT
-  (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" "white"))
+  (scene+line
+   (rectangle  WALL_THICKNESS (* 2 TILE_SIZE)  "solid" (make-color 255 0 0 0))
+   (/ WALL_THICKNESS 2)
+   10
+   (/ WALL_THICKNESS 2)
+   (- (* 2 TILE_SIZE) 10)
+   (make-pen "white" 11 "solid" "round" "round")))
 
 (define WALL_HORZ
   (rotate 90 WALL_VERT))
@@ -154,8 +166,8 @@
                  [(equal? id 4) PLAYER4]
                  )]
          )
-    (overlay/pinhole
-     (text (number->string remaining-walls) 30 "white")
+    (overlay/align "center" "center"
+     (center-pinhole (text (number->string remaining-walls) 30 "white"))
      token
    )))
 
@@ -172,12 +184,12 @@
         [y (second (cell->NWCorner (wall-cell wall)))])
    (cond
      [(equal? (wall-orientation wall) "vertical") (overlay/xy WALL_VERT
-                                                              (+ x (/ WALL_THICKNESS 2))
+                                                              (+ x (/ (image-width WALL_VERT) 2))
                                                               y
                                                               image)]
      [(equal? (wall-orientation wall) "horizontal") (overlay/xy WALL_HORZ
                                                                 x
-                                                                (+ y (/ WALL_THICKNESS 2))
+                                                                (+ y (/ (image-height WALL_HORZ) 2))
                                                                 image)]
      [(not (member (wall-orientation wall) '("vertical" "horizontal")))
       (raise (string-append "faulty wall orientation: " (wall-orientation wall)) #t)]
@@ -215,31 +227,107 @@
          x y
          image))))
 
+;; Player Image -> Image
+;; Renders a wall with correct position and orientation
+;; on an image
+(define (render-passive-player player image)
+  (let ([x (first (cell->NWCorner (player-cell player)))]
+        [y (second (cell->NWCorner (player-cell player)))])
+  (overlay/xy PASSIVE_TILE
+              x y                                                      
+              image)))
+
+;; Players -> Image
+;; Renders the passive fields for each player
+;; on an image
+(define (render-passive-players players image)
+  ((apply compose (map (lambda (x) (curry render-passive-player x)) players)) image))
+
+; (list cell) Image -> Image
+; lay a cell-perforation over the cells around the player
+(define (render-perforations moves sourcecell image)
+(let* ([x (first (cell->NWCorner sourcecell))]
+      [y (second (cell->NWCorner sourcecell))]
+      [bridge-size (* 0.5 TILE_SIZE)]
+      [gap-size (/ bridge-size 2)]
+      [place-bridge (lambda (x y img)
+                      (overlay/xy (square bridge-size "solid" POS_MOVE_COL) x y img))]) 
+  #|(apply compose
+    (list
+     (if #t
+      ;(cellInList?  moves (neighbour sourcecell "S"))
+         ;(and (print (string-append "SOK x:" (number->string x) " y: " (number->string y)))
+                     (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y)
+                     ;)
+                     (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") 0 0))
+     (if (cellInList?  moves (neighbour sourcecell "W"))
+         (and (print "WOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
+         (curry overlay/xy empty-image 0 0))
+     (if (cellInList?  moves (neighbour sourcecell "N"))
+         (and (print "NOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
+         (curry overlay/xy empty-image 0 0))
+     (if (cellInList?  moves (neighbour sourcecell "E"))
+         (and (print "EOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
+         (curry overlay/xy empty-image 0 0))
+     ))
+    image))|#
+  ;; West bridge
+  ((if (cellInList?  moves (neighbour sourcecell "W"))
+                     (curry place-bridge (+ x gap-size) (- y gap-size))
+                     (curry identity))
+                ;; East bridge
+                ((if (cellInList?  moves (neighbour sourcecell "E"))
+                     (curry place-bridge (- x (/ TILE_SIZE 2) gap-size) (- y gap-size))
+                     (curry identity))
+                              ;; South bridge
+                              ((if (cellInList?  moves (neighbour sourcecell "S"))
+                                   (curry place-bridge (- x gap-size) (- y (+ bridge-size  gap-size)))
+                                   (curry identity))
+                                            ;; North bridge
+                                            ((if (cellInList?  moves (neighbour sourcecell "N"))
+                                                 (curry place-bridge (- x gap-size) (+ y gap-size))
+                                                 (curry identity))
+                                             image
+                                             )
+                                            )
+                              )
+                )
+
+  ))
+
+
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
-(define (render-pos-moves moves image)
-    ((apply compose (map (lambda (x) (curry render-move x)) moves)) image))
+(define (render-pos-moves moves  image)
+    ((apply compose
+            (map (lambda (x) (curry render-move x))
+                 moves)) image))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the state, where the player is active
 (define (render-active-game ws)
+  (let* ([players (ws-players ws)]
+         [moves (possibleCells players (ws-current-player ws) ws)]
+         [playercell (player_pos players (ws-current-player ws))])
   ((compose
     (curry render-special (ws-special ws))
     (curry render-walls (ws-walls ws))
-    (curry render-players (ws-players ws))
-    (curry render-pos-moves (possibleCells (ws-players ws) (ws-current-player ws) ws))
+    (curry render-players players)
+    (curry render-perforations moves playercell)
+    (curry render-pos-moves (append moves (list playercell)))           
+    (curry render-passive-players players)
     (curry render-finish (ws-current-player ws))
     )
-   (render-empty-board)))
+   (render-empty-board))))
 
 ;; WorldState -> Image
-;; this is the rendering function for the state, where the player is active
+;; this is the rendering function for the state, where the player is passive
 (define (render-passive-game ws)
   ((compose
     (curry render-special (ws-special ws))
     (curry render-walls (ws-walls ws))
     (curry render-players (ws-players ws))
-    (curry render-pos-moves (possibleCells (ws-players ws) (ws-current-player ws) ws))
+    (curry render-passive-players (ws-players))
     (curry render-finish (ws-current-player ws))
     )
    (render-empty-board)))
@@ -303,3 +391,20 @@
     [(equal? (ws-gamestate ws) 'wait-or-play) (render-voting ws)]
     [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)] 
     ))
+
+;; WorldState -> WorldState
+;; updates the frame for animations
+(define (update-frame ws)
+  (if (empty? (ws-special ws))
+      ws
+      (let* ([oldspecial (ws-special ws)]
+         [x (special-x oldspecial)]
+         [y (special-y oldspecial)]
+         [img (special-img oldspecial)]
+         [lastframe (special-lastframe oldspecial)]
+         [currentframe (special-frame oldspecial)]
+         [newframe (if (= lastframe currentframe)
+                       lastframe
+                       (add1 currentframe))]
+         [newspecial (make-special  x y img newframe lastframe)])
+        (changeSpecial ws newspecial))))

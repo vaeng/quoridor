@@ -13,6 +13,8 @@
                       cellInList?
                       wallOK?
                       clicked-area
+                      player_pos
+                      neighbour
                       ))
 
 
