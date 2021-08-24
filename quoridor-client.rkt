@@ -238,25 +238,70 @@
 (define (wallsBetween? cell1 cell2 walls)
   (ormap identity (map (lambda (wall) (wallBetween? cell1 cell2 wall)) walls)))
 
-; StartCell GoalCell WallList -> Boolean
-; checks if a cell with the given position is a valid destination
-(define (walkableCell? startCell goalCell players walls) 
-  (if (and (validCell? goalCell) (not (playerPosition? goalCell players)))
-      (not (wallsBetween? startCell goalCell walls))
-    #f))
-
 ; Cell PlayerList -> Boolean
 ; checks if a Player is on the given Cell
 (define (playerPosition? goalCell players) 
   (ormap identity (map (lambda (cell) (cell=? cell goalCell))
                        (map (lambda (player)(player-cell player)) players))))
 
+; StartCell GoalCell WallList -> Boolean
+; checks if a cell with the given position is a valid destination
+(define (walkableCell? startCell goalCell walls) 
+  (if (and (validCell? goalCell))
+      (not (wallsBetween? startCell goalCell walls))
+    #f))
+
 ; PlayerList id WorldState -> CellList
 ; calculates possible moves for a given PlayerId
 (define (possibleCells players id ws)
-  (filter (lambda (cell) (walkableCell? (player_pos players id) cell players (ws-walls ws)))
-          (allNeighbours (player_pos players id))))
- 
+  (flatten (filter (negate empty?)
+                   (map (lambda (pos) (if (playerPosition? pos players)
+                   (jumpPlayer (player_pos players id) pos players (ws-walls ws)) pos))
+       (filter (lambda (cell) (walkableCell? (player_pos players id) cell (ws-walls ws)))
+               (allNeighbours (player_pos players id)))))))
+
+;StartCell GoalCell Players Walls -> CellList
+;calculates new moves when the player has to jump
+(define (jumpPlayer startCell goalCell players walls)
+  (let ([north (and (= (cell-x startCell) (cell-x goalCell)) (> (cell-y startCell) (cell-y goalCell)))]
+        [east (and (< (cell-x startCell) (cell-x goalCell)) (= (cell-y startCell) (cell-y goalCell)))]
+        [south (and (= (cell-x startCell) (cell-x goalCell)) (< (cell-y startCell) (cell-y goalCell)))]
+        [west (and (> (cell-x startCell) (cell-x goalCell)) (= (cell-y startCell) (cell-y goalCell)))])
+    (filter (lambda (cell) (validCell? cell))
+            (append (cond [north (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
+                                     (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
+                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) '() (neighbourList goalCell "W"))
+                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) (neighbourList goalCell "E")
+                                             (append (neighbourList goalCell "E") (neighbourList goalCell "W"))))
+                                     (neighbourList goalCell "N"))]
+                          [east (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
+                                    (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
+                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) '() (neighbourList goalCell "S"))
+                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) (neighbourList goalCell "N")
+                                            (append (neighbourList goalCell "N") (neighbourList goalCell "S"))))
+                                    (neighbourList goalCell "E"))]
+                          [south (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls)
+                                     (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
+                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) '() (neighbourList goalCell "W"))
+                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) (neighbourList goalCell "E")
+                                             (append (neighbourList goalCell "E") (neighbourList goalCell "W"))))
+                                     (neighbourList goalCell "S"))]
+                          [west (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls)
+                                    (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
+                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) '() (neighbourList goalCell "S"))
+                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) (neighbourList goalCell "N")
+                                            (append (neighbourList goalCell "N") (neighbourList goalCell "S"))))
+                                    (neighbourList goalCell "W"))])))))
+
+; cell direction -> cellList
+; returns a cellList of the cell in the direction of the origin cell
+(define (neighbourList cell direction)
+  (list (neighbour cell direction)))
+
+; Cell1 Cell2 WallList -> Boolean
+; checks if any Wall or Player is between given Cells
+(define (wallsOrPlayerBetween? cell1 cell2 players walls)
+  (or (wallsBetween? cell1 cell2 walls) (playerPosition? cell2 players)))
 
 ; PlayerList id -> PlayerList
 ; remove a wall from a certain player
