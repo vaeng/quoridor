@@ -10,7 +10,7 @@
 ;; Ein UniverseState ist eine Liste mit folgenden Inhalten:
 ;; Liste aus Worlds, ein univState, sowie der letzte Spielzug (lastMove)
 ;; interpretation die World am Anfang der Liste ist die derzeit aktive World
-;; (list '((cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5)))
+;; (list '((cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5 'horizontal)))
 
 ;; Worlds sind Paare aus einer iWorld sowie einer Nummer
 ;; interpretation die Nummer stellt die ID der World dar
@@ -25,31 +25,31 @@
 ;; 2pw1a = 2players world 1 accepted (to wait)
 
 ;; lastMove ist eine Liste bestehend aus Nummer, Symbol, Nummer, Nummer
-;; interpretation SpielerId, Art des Zuges: Mauer oder Bewegung, Koordinaten der Platzierung
-;; Nummer, Symbol, Nummer, Nummer
-;; (list 1 'player 4 2)
+;; interpretation SpielerId, Art des Zuges: Mauer oder Bewegung, Koordinaten der Platzierung, Orientierung der Mauer ('horizontal, 'vertikal)
+;; Nummer, Symbol, Nummer, Nummer, Symbol
+;; (list 1 'player 4 2 'horizontal)
 
 (define UNIVERSE0
   (list '() 'wait '()))
 
 (define UNIVERSE1
-  (list (list (cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5)))
+  (list (list (cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5 'horizontal)))
 
 ;; KOMMUNIKATION
 
 ;;  Eine MailS2W ist eine Liste der Form
 ;; (list msgS2W aktiverSpielerID lastMove)
 ;; interpretation Eine Nachricht vom Server an eine World
-;; (make-mail iworld1 (list 'play 1 (list 'wall 1 3)))
+;; (make-mail iworld1 (list 'play 1 (list 'wall 1 3 'horizontal)))
 
 ;; msgS2W ist eines der folgenden Symbole
-;; 'wait-for-players, 'active, 'passive, 'won, 'lost, 'newGame, 'wait-or-play, 'rejected, 'voted
+;; 'wait-for-players, 'play, 'wait, 'won, 'lost, 'start2play, 'start2wait, 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted
 
 ;; MailW2S ist eine Liste der Form
-;; (list msgW2S action x y)
+;; (list msgW2S action x y orientation)
 ;; x und y sind Nummern die Koordinaten darstellen
 ;; interpretation eine Nachricht von einem Client zum Universe
-;; (make-mail univ 'move 'wall 3 4)
+;; (make-mail univ 'move 'wall 3 4 'horizontal)
 
 ;; msgW2S ist eines der folgenden Symbole
 ;; 'play, 'wait, 'move
@@ -64,7 +64,12 @@
 ;; HILFSFUNKTIONEN UNIVERSE
 
 ;; Hilfsfunktionen für den Zugriff auf den UniverseState
-;;(list (list (cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5)))
+;;(list (list (cons iworld1 1) (cons iworld2 2)) 'wait (list 1 'wall 3 5 'horizontal)))
+
+
+
+
+
 
 
 ;; ZUGRIFFE AUF WORLDS
@@ -145,7 +150,7 @@
 ;; UniverseState -> Number
 ;; Erhalte ID des Spielers, der den letzten Zug ausgeführt hat
 (define (get_ID_LastMove univ)
-  (car (get_LastMove univ)))
+  (first (get_LastMove univ)))
 
 ;; UniverseState -> Symbol
 ;; Erhalte die Aktion des letzten Zugs
@@ -162,7 +167,18 @@
 ;; Erhalte y-Koordinate des letzten Zugs
 
 (define (get_y_LastMove univ)
-  (fourth (get_LastMove univ)))
+  (cadddr (get_LastMove univ)))
+
+
+;; UniverseState -> Symbol
+;; Erhalte Mauer-Orientierung des letzten Zugs
+(define (get_Orientation_LastMove univ)
+  (last (get_LastMove univ)))
+
+
+
+
+
 
 
 
@@ -190,7 +206,18 @@
 ;; MailW2S -> Number
 ;; Erhalte die y-Koordinate von einer Mail zum Server
 (define (get_y_Mail mail)
-  (fourth mail))
+  (cadddr mail))
+
+;; MailW2S -> Symbol
+;; Erhalte Mauer-Orientierung von einer Mail zum Server
+(define (get_Orientation_Mail mail)
+  (last mail))
+
+;; MailW2S iWorld -> lastMove
+;; führt einen übermittelten Zug über in die Darstellung des Servers
+(define (make_Move iworld mail)
+  (list (get_ID_from_iWorld iworld) (get_Action_Mail mail) (get_x_Mail mail) (get_y_Mail mail) (get_Orientation_Mail mail)))
+
 
 
 ;; REAKTION AUF ANMELDUNGEN
@@ -258,8 +285,8 @@
 (check-expect
  (add-world (list (list (cons iworld1 1) (cons iworld2 2) (cons iworld3 3)) '4players '()) iworld4)
  (make-bundle (list (list (cons iworld1 1) (cons iworld2 2) (cons iworld3 3) (cons iworld4 4))  '4players '())
-                    (append (map (curryr make-mail (list 'wait 1 '())) (list iworld2 iworld3 iworld4))
-                            (list (make-mail  iworld1 (list 'play 1 '()))))
+                    (append (map (curryr make-mail (list 'start4wait 1 '())) (list iworld2 iworld3 iworld4))
+                            (list (make-mail  iworld1 (list 'start4play 1 '()))))
                     '()))
 
 ; ein fünfter Spieler möchte sich anmelden
@@ -314,9 +341,9 @@
      (make-bundle (list (append (get_Worlds univ) (list (makeWorldPair univ world)))
                         '4players
                         '())
-                  (append (map (curryr make-mail (list 'wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
-                          (list (make-mail world (list 'wait (get_Active_ID univ) '())))
-                          (list (make-mail (get_Active_iWorld univ) (list 'play (get_Active_ID univ) '()))))
+                  (append (map (curryr make-mail (list 'start4wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
+                          (list (make-mail world (list 'start4wait (get_Active_ID univ) '())))
+                          (list (make-mail (get_Active_iWorld univ) (list 'start4play (get_Active_ID univ) '()))))
                   '())]
     ;; 4 Spieler, das Spiel ist voll
     [else
@@ -472,8 +499,8 @@
      ;; einer der beiden will nicht warten -> starte zu zweit
      (if (equal? m 'play)
          (make-bundle (list (get_Worlds univ) '2players '())
-                      (append (map (curryr make-mail (list 'wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
-                              (list (make-mail (get_Active_iWorld univ) (list 'play (get_Active_ID univ) '()))))
+                      (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
+                              (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
                       '())
          ;; einer der beiden will warten, ermittle wer
          (if (equal? (get_ID_from_iWorld wrld univ) 1)
@@ -507,12 +534,26 @@
                       '()))]
     
     ;; die Welten sind nicht im Abstimmungsmodus
-    [else (make-bundle '() '())]))
+    [else (make-bundle univ '() '())]))
 
 ;; Universe World Mail -> Bundle
 ;; Hilfsfunktion um Spielanfragen zu bearbeiten
 (define (handle-messages-move univ wrld m)
-  '())
+
+  ;;prüfe ob Universe im richtigen Zustand ist
+  (cond
+    ;; Leite Zug an alle im Vier-Spieler-Spiel weiter und ändere den aktiven Spieler
+    [(equal? (get_State univ) '4player)
+     ;; prüfe, ob der übermittelte Zug den Sieg bringt
+     (if (winningMove? (make_Move wrld m))
+         ;; der Sieger steht fest
+         (make-bundle (list (get_Worlds univ) 'finished (make_Move wrld m))
+                      (make-mail wrld (list 'won 0 )))
+         ;; es gibt noch keinen Sieger
+         '())
+     (make-bundle (append (get_Inactive_Worlds)))]
+    ;; Leite Zug an alle im Zwei-Spieler-Spiel weiter und ändere den aktiven Spieler
+    [(equal? (get_State univ ' 2players))]))
 
 ;; LastMove -> Boolean
 ;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat
@@ -545,8 +586,16 @@
 
 ;; START DES UNIVERSUMS
 
-(universe UNIVERSE0
-          (on-new add-world)
-          (on-msg handle-messages))
+;;(universe UNIVERSE0
+        ;;  (on-new add-world)
+        ;;  (on-msg handle-messages))
 
-;(test)
+(test)
+
+
+
+#|
+(universe UNIVERSE0
+(on-new add-world)
+(on-msg handle-messages))
+|#
