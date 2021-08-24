@@ -2,6 +2,8 @@
 (require 2htdp/universe)
 (require test-engine/racket-tests)
 
+(require "settings.rkt")
+
 ;; UNIVERSUM
 
 ;; Ein UniverseState ist eine Liste mit folgenden Inhalten:
@@ -405,7 +407,7 @@
               '()))
 
 ;; World möchte abstimmen
-(check-expect
+(check-expect 
  (handle-messages (list '((iworld2 . 2) (iworld1 . 1)) '2players (list 1 'player 4 2)) iworld2 (list 'wait 'wall 5 6))
  (make-bundle (list '((iworld2 . 2) (iworld1 . 1)) '2players (list 1 'player 4 2))
               '()
@@ -415,10 +417,22 @@
 ;; TESTS FÜR DAS SPIELENDE
 
 ;; World erreicht die Win-Condition im Zwei-Spieler-Spiel
-;; TODO
+(check-expect (winningMove? '(1 'player 1 (sub1 BOARD_SIZE)))
+              #t)
+(check-expect (winningMove? '(2 'player 3 0))
+              #t)
 
 ;; World erreicht die Win-Condition im Vier-Spieler-Spiel
-;; TODO
+(check-expect (winningMove? '(3 'player (sub1 BOARD_SIZE) 4))
+              #t)
+(check-expect (winningMove? '(4 'player 0 7))
+              #t)
+
+;; World erreicht die Win-Condition nicht
+(check-expect (winningMove? '(2 wall 3 4))
+              #f)
+(check-expect (winningMove? '(4 'player 1 4))
+              #f)
 
 
 ;IMPLEMENTATION
@@ -441,7 +455,30 @@
 ;; LastMove -> Boolean
 ;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat
 (define (winningMove? lastMove)
-  #t)
+  (let ([movetype (second lastMove)]
+        [id (first lastMove)]
+        [x (third lastMove)]
+        [y (fourth lastMove)]
+        [lastrow (sub1 BOARD_SIZE)]
+        [firstrow 0]
+        [lastcolumn (sub1 BOARD_SIZE)]
+        [firstcolumn 0])
+  (cond  
+    ; type muss eine Spielerbewegung sein:
+    [(= movetype 'player)
+     (cond
+       ; Player 1 muss in letzte Zeile rücken
+       [(and (= id 1) (= y lastrow)) #t]
+       ; Player 2 muss in erste Zeile rücken
+       [(and (= id 2) (= y firstrow)) #t]
+       ; Player 3 muss in letzte Reihe rücken
+       [(and (= id 3) (= x lastcolumn)) #t]
+       ; Player 4 muss in erste Reihe rücken
+       [(and (= id 4) (= x firstcolumn)) #t]
+       ; safety if strange id was submitted:
+       [else #f])]
+    [else #f]
+    )))
 
 
 ;; START DES UNIVERSUMS
