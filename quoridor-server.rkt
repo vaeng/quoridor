@@ -72,6 +72,11 @@
   (car world))
 
 
+;; UniverseState -> iWorlds
+;; erhalte eine Liste mit allen iWorlds
+(define (get_iWorlds univ)
+  (map get_iWorld (get_Worlds univ)))
+
 ;; world -> Number
 ;; erhalte die ID einer gegebenen World
 (define (get_ID world)
@@ -195,57 +200,57 @@
 (check-expect
  (add-world UNIVERSE0 iworld1)
  (make-bundle (list '((iworld1 . 1)) 'wait '())
-              (make-mail iworld1 (list 'wait-for-players 0 '()))
+              (list (make-mail iworld1 (list 'wait-for-players 0 '())))
               '()))
 
 ; zweiter Spieler meldet sich an
 (check-expect
  (add-world (list '((iworld1 . 1)) 'wait '()) iworld2)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2)) '2p? '())
-              (map (curryr (make-mail (list 'wait-or-play 0 '()))) '(iworld1 iworld2))
+              (map (curryr make-mail (list 'wait-or-play 0 '())) (list iworld1 iworld2))
               '()))
 
 ; dritter Spieler meldet sich an, nachdem Spieler eins und zwei sich geeinigt haben zu warten
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2)) '4players '()) iworld3)
- (make-bundle (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3) '4players '())
-                    (map (curryr (make-mail (list 'waiting-for-players 0 '()))) '(iworld1 iworld2 iworld3)))
+ (make-bundle (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3) '4players '()))
+                    (map (curryr make-mail (list 'waiting-for-players 0 '())) (list iworld1 iworld2 iworld3))
               '()))
 
 ; dritter Spieler meldet sich an, nachdem die ersten beiden Spieler zu zweit spielen wollen
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2)) '2players '()) iworld3)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) '2players '()))
-              (make-mail iworld3 (list 'rejected 0 '()))
-              '(iworld3)))
+              (list (make-mail iworld3 (list 'rejected 0 '())))
+              (list iworld3)))
 
 ; dritter Spieler meldet sich an, nachdem Spieler 1 warten will
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2)) '2pw1a '()) iworld3)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) '2pw1a '()))
               (make-mail iworld3 (list 'rejected 0 '()))
-              '(iworld3)))
+              (list iworld3)))
 
 ; dritter Spieler meldet sich an, nachdem Spieler 2 warten will
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2)) '2pw2a '()) iworld3)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) '2pw2a '()))
               (make-mail iworld3 (list 'rejected 0 '()))
-              '(iworld3)))
+              (list iworld3)))
 
 ; dritter Spieler meldet sich an, während sie noch keine Entscheidung getroffen haben
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2)) '2p? '()) iworld3)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) '2p? '())
                     (make-mail iworld3 (list 'rejected 0 '()))
-                    '())))
+                    (list iworld3))))
 
 ; vierter Spieler meldet sich an, nachdem sich auf ein Vier-Spieler-Spiel geeinigt wurde
 (check-expect
  (add-world (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3)) '4players '()) iworld4)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3) (iworld4 . 4)  '4players '())
                     (append (list (make-mail  iworld1 (list 'play 1 '()))
-                                  (map (curryr (make-mail (list 'play 1 '()))) iworld2 iworld3 iworld4)))
+                                  (map (curryr make-mail (list 'play 1 '())) iworld2 iworld3 iworld4)))
                     '())))
 
 ; ein fünfter Spieler möchte sich anmelden
@@ -253,12 +258,62 @@
  (add-world (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3) (iworld4 . 4)) '4players '()) iworld5)
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2) (iworld3 . 3) (iworld4 . 4)  '4players '())
                     (list (make-mail iworld5 (list 'rejected 1 '())))
-                    '(iworld5))))
+                    (list iworld5))))
+
+
+(define (makeWorldPair univ iworld)
+  (cond
+    [(empty? (get_Worlds univ)) (cons iworld 1)]
+    [else (cons iworld (add1 (length (get_Worlds univ))))]))
+
 
 
 ;; IMPLEMENTATION
 (define (add-world univ world)
-  '()) 
+  (cond
+
+    ;;0 Spieler
+    [(= (length (get_Worlds univ)) 0)
+     (make-bundle (list (append (get_Worlds univ) (makeWorldPair univ world))
+                        'wait
+                        '())
+                  (list (make-mail iworld1 (list 'wait-for-players 0 '())))
+                  '())]
+    ;;1 Spieler, sende Startanfrage an beide Teilnehmer
+    [(= (length (get_Worlds univ)) 1)
+     (make-bundle (list (append (get_Worlds univ) (makeWorldPair univ world))
+                        '2p?
+                        '())
+                  (map (curryr make-mail (list 'wait-or-play 0 '())) (get_iWorlds univ))
+                  '())]
+    ;; 2 Spieler
+    [(= (length (get_Worlds univ)) 2)
+     ;; Wollen beide Spieler warten?
+     (if (equal? (get_State univ) '4players)
+         ;; falls ja, füge anfragende Welt hinzu
+         (make-bundle (list (append (get_Worlds univ) (makeWorldPair univ world))
+                        '4players
+                        '())
+                  (map (curryr make-mail (list 'wait-for-players 0 '())) (get_iWorlds univ))
+                  '())
+         ;; falls nein, belasse das Spiel im vorherigen Zustand und entferne anfragende Welt
+         (make-bundle univ
+                  (list (make-mail (list 'rejected 0 '()) world))
+                  (list world)))]
+    ;; 3 Spieler, beginne das Spiel zu viert
+    [(= (length (get_Worlds univ) 3))
+     (make-bundle (list (append (get_Worlds univ) (makeWorldPair univ world))
+                        '4players
+                        '())
+                  (append (map (curryr make-mail (list 'wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
+                          (make-mail (get_Active_iWorld univ) (list 'play (get_Active_ID univ) '())))
+                  '())]
+    ;; 4 Spieler, das Spiel ist voll
+    [else
+     (make-bundle univ
+                  (list (make-mail (list 'rejected 0 '()) world))
+                  (list world))]))
+
 
 
 
@@ -298,14 +353,14 @@
 (check-expect
  (handle-messages (list '((iworld1 . 1) (iworld2 . 2)) '2pw1a '()) iworld2 (list 'wait 'wall 0 0))
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2)) 'wait '())
-              (map (curryr (make-mail '('wait-for-player 0 '()))) iworld1 iworld2)
+              (map (curryr make-mail '('wait-for-player 0 '())) iworld1 iworld2)
               '()))
 
 ;; World 1 möchte nach World 2 warten (beide warten)
 (check-expect
  (handle-messages (list '((iworld1 . 1) (iworld2 . 2)) '2pw2a '()) iworld1 (list 'wait 'wall 0 0))
  (make-bundle (list '((iworld1 . 1) (iworld2 . 2)) 'wait '())
-              (map (curryr (make-mail (list 'wait-for-player 0 '()))) iworld1 iworld2)
+              (map (curryr make-mail (list 'wait-for-player 0 '())) iworld1 iworld2)
               '()))
 
 ;; World möchte nochmal abstimmen
@@ -338,7 +393,7 @@
 (check-expect
  (handle-messages (list '((iworld2 . 2) (iworld3 . 3) (iworld4 . 4) (iworld1 . 1)) '4players (list 1 'player 4 2)) iworld2 (list 'move 'wall 5 6))
  (make-bundle (list '((iworld3 . 3) (iworld4 . 4) (iworld1 . 1) (iworld2 . 2)) '4players (list 2 'wall 5 6))
-              (append (map (curryr (make-mail (list 'wait 3 (list 2 'wall 5 6)))) iworld1 iworld2 iworld4)
+              (append (map (curryr make-mail (list 'wait 3 (list 2 'wall 5 6))) iworld1 iworld2 iworld4)
                       (list (make-mail  iworld3 (list 'play 3 (list 2 'wall 5 6)))))
               '()))
 
