@@ -202,7 +202,7 @@
 (launch-many-worlds 
   (create-world "X")
   (create-world "O")
-  (create-world "B")
-  (create-world "C")
+ ; (create-world "B")
+ ; (create-world "C")
   )
 

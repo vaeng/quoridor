@@ -497,7 +497,7 @@
     ;; es hat noch keiner abgestimmt
     [(equal? (get_State univ) '2p?)
      ;; einer der beiden will nicht warten -> starte zu zweit
-     (if (equal? m 'play)
+     (if (equal? (first m) 'play)
          (make-bundle (list (get_Worlds univ) '2players '())
                       (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
                               (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
@@ -590,12 +590,12 @@
         ;;  (on-new add-world)
         ;;  (on-msg handle-messages))
 
-(test)
+; (test)
 
 
 
-#|
+
 (universe UNIVERSE0
-(on-new add-world)
-(on-msg handle-messages))
-|#
+          (on-new add-world)
+          (on-msg handle-messages))
+
