@@ -129,37 +129,44 @@
                (allNeighbours (player_pos players id)))))))
 
 ;StartCell GoalCell Players Walls -> CellList
-;calculates new moves when the player has to jump
+;calculates new moves when the player has to jump other Players
 (define (jumpPlayer startCell goalCell players walls)
   (let ([north (and (= (cell-x startCell) (cell-x goalCell)) (> (cell-y startCell) (cell-y goalCell)))]
         [east (and (< (cell-x startCell) (cell-x goalCell)) (= (cell-y startCell) (cell-y goalCell)))]
         [south (and (= (cell-x startCell) (cell-x goalCell)) (< (cell-y startCell) (cell-y goalCell)))]
-        [west (and (> (cell-x startCell) (cell-x goalCell)) (= (cell-y startCell) (cell-y goalCell)))])
+        [west (and (> (cell-x startCell) (cell-x goalCell)) (= (cell-y startCell) (cell-y goalCell)))]
+        [valid? (lambda (direction) (not (wallsOrPlayerBetween? goalCell (neighbour goalCell direction) players walls)))]
+	[getNeighbourList (lambda (direction) (neighbourList goalCell direction))])
     (filter (lambda (cell) (validCell? cell))
-            (append (cond [north (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
-                                     (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
-                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) '() (neighbourList goalCell "W"))
-                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) (neighbourList goalCell "E")
-                                             (append (neighbourList goalCell "E") (neighbourList goalCell "W"))))
-                                     (neighbourList goalCell "N"))]
-                          [east (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
-                                    (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
-                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) '() (neighbourList goalCell "S"))
-                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) (neighbourList goalCell "N")
-                                            (append (neighbourList goalCell "N") (neighbourList goalCell "S"))))
-                                    (neighbourList goalCell "E"))]
-                          [south (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls)
-                                     (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "E") players walls)
-                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) '() (neighbourList goalCell "W"))
-                                         (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls) (neighbourList goalCell "E")
-                                             (append (neighbourList goalCell "E") (neighbourList goalCell "W"))))
-                                     (neighbourList goalCell "S"))]
-                          [west (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "W") players walls)
-                                    (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "N") players walls)
-                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) '() (neighbourList goalCell "S"))
-                                        (if (wallsOrPlayerBetween? goalCell (neighbour goalCell "S") players walls) (neighbourList goalCell "N")
-                                            (append (neighbourList goalCell "N") (neighbourList goalCell "S"))))
-                                    (neighbourList goalCell "W"))])))))
+            (append (cond [north (if (and (valid? "N")(validCell? (neighbour goalCell "N")))
+                                     (getNeighbourList "N")
+                                     (if (valid? "E")
+                                         (if (valid? "W")
+                                             (append (getNeighbourList "E") (getNeighbourList "W"))
+                                             (getNeighbourList "E"))
+                                         (if (valid? "W") (getNeighbourList "W") '())))]
+                          [east (if (and (valid? "E")(validCell? (neighbour goalCell "E")))
+                                     (getNeighbourList "E")
+                                     (if (valid? "N")
+                                         (if (valid? "S")
+                                             (append (getNeighbourList "N") (getNeighbourList "S"))
+                                             (getNeighbourList "N"))
+                                         (if (valid? "S") (getNeighbourList "S") '())))]
+                          [south (if (and (valid? "S")(validCell? (neighbour goalCell "S")))
+                                     (getNeighbourList "S")
+                                     (if (valid? "E")
+                                         (if (valid? "W")
+                                             (append (getNeighbourList "E") (getNeighbourList "W"))
+                                             (getNeighbourList "E"))
+                                         (if (valid? "W") (getNeighbourList "W") '())))]
+                          [west (if (and (valid? "W")(validCell? (neighbour goalCell "W")))
+                                     (getNeighbourList "W")
+                                     (if (valid? "N")
+                                         (if (valid? "S")
+                                             (append (getNeighbourList "N") (getNeighbourList "S"))
+                                             (getNeighbourList "N"))
+                                         (if (valid? "S") (getNeighbourList "S") '())))]
+                          [else '()])))))
 
 ; cell direction -> cellList
 ; returns a cellList of the cell in the direction of the origin cell
