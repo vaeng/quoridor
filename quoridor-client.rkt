@@ -207,39 +207,27 @@
 ; Cell1 Cell2 WallList -> Boolean
 ; checks if any Wall is between given Cells
 (define (wallsBetween? cell1 cell2 walls)
-  (ormap identity (map
-                   (lambda (wall) (wallBetween? cell1 cell2 wall)) walls)))
+  (ormap identity (map (lambda (wall) (wallBetween? cell1 cell2 wall)) walls)))
 
 ; StartCell GoalCell WallList -> Boolean
 ; checks if a cell with the given position is a valid destination
 (define (walkableCell? startCell goalCell players walls) 
-(if (and (validCell? goalCell) (not (playerPosition? goalCell players)))      (not (wallsBetween? startCell goalCell walls))      #f))
+  (if (and (validCell? goalCell) (not (playerPosition? goalCell players)))
+      (not (wallsBetween? startCell goalCell walls))
+    #f))
 
 ; Cell PlayerList -> Boolean
 ; checks if a Player is on the given Cell
 (define (playerPosition? goalCell players) 
-(ormap identity (map (lambda (cell) (cell=? cell goalCell)) (map (lambda (player)(player-cell player)) players)))) 
+(ormap identity (map (lambda (cell) (cell=? cell goalCell))
+                      (map (lambda (player)(player-cell player)) players))))
 
 
 ; PlayerList id WorldState -> CellList
 ; calculates possible moves for a given PlayerId
 (define (possibleCells players id ws)
-  (let ([x (cell-x (player_pos players id))]
-        [y (cell-y (player_pos players id))]
-        [walls (ws-walls ws)])
-    (append [if (walkableCell? (player_pos players id)
-                               (make-cell x (add1 y)) players walls)
-                (list (make-cell x (add1 y))) '()]
-            [if (walkableCell? (player_pos players id)
-                               (make-cell x (sub1 y)) players walls)
-                (list (make-cell x (sub1 y))) '()]
-            [if (walkableCell? (player_pos players id)
-                               (make-cell (add1 x) y) players walls)
-                (list (make-cell (add1 x) y)) '()]
-            [if (walkableCell? (player_pos players id)
-                               (make-cell (sub1 x) y) players walls)
-                (list (make-cell (sub1 x) y)) '()]
-            ))) 
+  (filter (lambda (cell) (walkableCell? (player_pos players id) cell players (ws-walls ws)))
+               (allNeighbours (player_pos players id))))
 
 ; PlayerList id -> PlayerList
 ; remove a wall from a certain player
@@ -276,6 +264,12 @@
 ; returns #t if wall is in list of walls
 (define (wallInList? lst wall)
   (memf (curry wall=? wall) lst))
+
+; cell -> CellList
+; returns all Neighbours of a given Cell
+(define (allNeighbours cell) 
+  (list (neighbour cell "N") (neighbour cell "E") (neighbour cell "S") (neighbour cell "W")))
+
 ; cell direction -> cell
 ; returns the cell in the direction of the origin cell
 ; direction is one of S, N, W, E for south, north, etch
@@ -412,7 +406,6 @@
 (define (removeCellFromList cell lst)
   (filter (curry (negate cell=?) cell) lst))
 
-
 ; Worldstate id -> bool
 ; returns false if a certain player can'r reach its goal line
 (define (wayNotBlocked? ws id candidates checked-candidates)
@@ -446,7 +439,6 @@
      (+ (length (ws-walls ws)) ; build walls
         (apply + (map player-remaining-walls (ws-players ws))))) ; remaining-walls from players
   )))
-
 
 
 ;  ######                                                     
@@ -658,7 +650,6 @@
          (changeCurrentPlayer ws 4)]
         [else ws]))
 
-
 ; number number -> (list Area, cell)
 ; returns the Area that was clicked, according to this
 ; scheme:
@@ -775,6 +766,4 @@
            "active-game"))
 
 
-
 (main new-game-4)
-
