@@ -3,10 +3,8 @@
 (require 2htdp/universe)
 (require test-engine/racket-tests)
 (require racket/struct)
-<<<<<<< HEAD
 (require lang/posn)
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
+
 
 ; ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
 ;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
@@ -34,11 +32,8 @@
 ;   #####     #    #     #  #####   #####     #     #####  #     # #######  #####                                                                 
 
 
-<<<<<<< HEAD
+
 (define-struct ws [players walls current-player gamestate special]
-=======
-(define-struct ws [players walls current-player gamestate]
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
       #:methods gen:custom-write
     [(define write-proc
        (make-constructor-style-printer
@@ -51,27 +46,17 @@
                 (unquoted-printing-string "#:current-player")
                 (ws-current-player obj)
                 (unquoted-printing-string "#:gamestate")
-<<<<<<< HEAD
                 (ws-gamestate obj)
                 (unquoted-printing-string "#:special")
                 (ws-special obj)))))])
 
 ; A ws is a strucutre
 ; (make-ws (list player ...) (list wall ...) id gamestate special)
-=======
-                (ws-gamestate obj)))))])
-
-; A ws is a strucutre
-; (make-ws (list player ...) (list wall ...) id gamestate)
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 ; interpretation players on the board, with walls and the current active player.
 ; when there are no walls on the board, the list of walls can be empty.
 ; the list of players has as many entries as there are players.
 ; A gamestate is used to navigate menus, etc.
-<<<<<<< HEAD
 ; a special is used to show hovering objects or messages
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 (define-struct wall [cell orientation]
     #:methods gen:custom-write
@@ -113,7 +98,7 @@
 ; Interpretation a cell is a field on the game board, numbered from 0 to 8
 ; on the x and y axis.
 
-<<<<<<< HEAD
+
 (define-struct special [x y img frame lastframe]
       #:methods gen:custom-write
     [(define write-proc
@@ -135,8 +120,7 @@
 ; (make-special number number image number number)
 ; Interpretation a sepcial is an image at position x and y and frame
 
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
+
 ; An id his one of these numbers:
 ; - 1
 ; - 2
@@ -261,33 +245,18 @@
       (not (wallsBetween? startCell goalCell walls))
     #f))
 
-<<<<<<< HEAD
-
 ; Cell PlayerList -> Boolean
 ; checks if a Player is on the given Cell
 (define (playerPosition? goalCell players) 
   (ormap identity (map (lambda (cell) (cell=? cell goalCell))
                        (map (lambda (player)(player-cell player)) players))))
 
-=======
-; Cell PlayerList -> Boolean
-; checks if a Player is on the given Cell
-(define (playerPosition? goalCell players) 
-(ormap identity (map (lambda (cell) (cell=? cell goalCell))
-                      (map (lambda (player)(player-cell player)) players))))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
-
-
 ; PlayerList id WorldState -> CellList
 ; calculates possible moves for a given PlayerId
 (define (possibleCells players id ws)
   (filter (lambda (cell) (walkableCell? (player_pos players id) cell players (ws-walls ws)))
-<<<<<<< HEAD
           (allNeighbours (player_pos players id))))
  
-=======
-               (allNeighbours (player_pos players id))))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 ; PlayerList id -> PlayerList
 ; remove a wall from a certain player
@@ -304,12 +273,9 @@
   (make-ws (ws-players ws)
            (ws-walls ws)
            id
-<<<<<<< HEAD
            (ws-gamestate ws)
            (ws-special ws)))
-=======
-           (ws-gamestate ws)))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
+
 
 ; WorldState id -> WorldState
 ; change the game-state
@@ -317,7 +283,6 @@
   (make-ws (ws-players ws)
            (ws-walls ws)
            (ws-current-player ws)
-<<<<<<< HEAD
            newstate
            (ws-special ws)))
 
@@ -329,9 +294,6 @@
            (ws-current-player ws)
            (ws-gamestate ws)
            special))
-=======
-           newstate))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 ; wall wall -> bool
 ; checks if walls are the same
@@ -372,11 +334,7 @@
   (< 0
      (player-remaining-walls (car (filter (lambda (x) (equal? id (player-id x))) players))))
       
-<<<<<<< HEAD
   ; no overlapping walls and board-boarders
-=======
-  ; no overlapping walls
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
   (and
     ; direct copy of existing wall
     (not (wallInList? walls (make-wall cell orientation)))
@@ -390,15 +348,12 @@
         (not (wallInList? walls (make-wall (neighbour cell "E") "horizontal")))
         ; not bridging over a verical wall
         (not (wallInList? walls (make-wall (neighbour cell "NE") "vertical")))
-<<<<<<< HEAD
         ; no horz. walls in the last column, extending over the board
         (< (cell-x cell) (sub1 BOARD_SIZE))
         ; no horz. walls over the first row
         (< 0 (cell-y cell))
         ; no horz. walls under the last row
         (< (cell-y cell) BOARD_SIZE)
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
        )]
       [(string=? "vertical" orientation)
        (and 
@@ -408,34 +363,16 @@
         (not (wallInList? walls (make-wall (neighbour cell "N") "vertical")))
         ; not bridging over a horz. wall
         (not (wallInList? walls (make-wall (neighbour cell "SW") "horizontal")))
-<<<<<<< HEAD
         ; no vert. walls in the last row, extending over the board
         (< (cell-y cell) (sub1 BOARD_SIZE))
         ; no vert. walls left of the first column
         (< 0 (cell-x cell))
         ; no vert. walls right the last colum
         (< (cell-x cell)  BOARD_SIZE)
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
        )]
-      
+     
     )
   )
-<<<<<<< HEAD
-=======
-  ; boarder walls
-  (and
-   ; no horz. walls in the first row
-   (< 0 (cell-y cell))
-   ; no horz. walls in the last row
-   (< (cell-y cell) BOARD_SIZE)
-   ; no horz. walls in the last row, extending over the board
-   (< (cell-x cell) (sub1 BOARD_SIZE))
-   ; no vert. walls in the last row, extending over the board
-   (< (cell-y cell) (sub1 BOARD_SIZE))
-   )
-
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
   ))
 
 
@@ -450,12 +387,8 @@
        (substractWall (ws-players ws) id) ; update player's remaining walls
        (cons (make-wall cell orientation) (ws-walls ws)) ; add wall to worldstate
        (ws-current-player ws) ;keep-current-player
-<<<<<<< HEAD
        (ws-gamestate ws) ; keep-gamestate
        (ws-special ws)) ; keep special
-=======
-       (ws-gamestate ws)) ; keep-gamestate
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
       ws) 
      )
 
@@ -481,11 +414,7 @@
   (if (moveOK? ws cell id)
          (make-ws  (changeCell (ws-players ws) cell id)
                     (ws-walls ws)
-<<<<<<< HEAD
                     (ws-current-player ws) (ws-gamestate ws) (ws-special ws))
-=======
-                    (ws-current-player ws) (ws-gamestate ws))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
          ws))
 
 ; cell id -> number
@@ -519,10 +448,6 @@
 (define (removeCellFromList cell lst)
   (filter (curry (negate cell=?) cell) lst))
 
-<<<<<<< HEAD
-
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 ; Worldstate id -> bool
 ; returns false if a certain player can'r reach its goal line
 (define (wayNotBlocked? ws id candidates checked-candidates)
@@ -557,14 +482,11 @@
         (apply + (map player-remaining-walls (ws-players ws))))) ; remaining-walls from players
   )))
 
-<<<<<<< HEAD
 ; posn number number -> posn
 ; create a new posn from offsets of an old-one
 (define (offset-posn posn deltax deltay)
   (make-posn (+ (posn-x posn) deltax)
              (+ (posn-y posn) deltay)))
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 ;  ######                                                     
 ;  #     # ###### #    # #####  ###### #####  # #    #  ####  
@@ -577,7 +499,6 @@
 ; size of tiles in pixels
 (define TILE_SIZE 80)
 
-<<<<<<< HEAD
 (define WALL_THICKNESS (/ TILE_SIZE 20))
 (define WALL_HEIGHT (* 4 WALL_THICKNESS))
 
@@ -635,41 +556,10 @@
 
 (define WALL_VERT
   (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" "white"))
-=======
-(define WALL_THICKNESS 4)
-
-(define TILE
-  (overlay (square (- TILE_SIZE 2) "solid" "grey")
-           (square TILE_SIZE "outline" "black")))
-
-(define POS_MOVE
-  (overlay (square (- TILE_SIZE 2) "solid" "Alice Blue")
-           (square TILE_SIZE "outline" "black")))
-
-(define FIN_MOVE
-  (overlay (square (- TILE_SIZE 2) "solid" "Pale Green")
-           (square TILE_SIZE "outline" "black")))
-
-(define PLAYER1
-  (circle (/ ( - TILE_SIZE WALL_THICKNESS) 2) "solid" "red"))
-
-(define PLAYER2
-  (circle (/ ( - TILE_SIZE WALL_THICKNESS) 2) "solid" "blue"))
-
-(define PLAYER3
-  (circle (/ ( - TILE_SIZE WALL_THICKNESS) 2) "solid" "green"))
-
-(define PLAYER4
-  (circle (/ ( - TILE_SIZE WALL_THICKNESS) 2) "solid" "purple"))
-
-(define WALL_VERT
-  (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" "brown"))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 (define WALL_HORZ
   (rotate 90 WALL_VERT))
 
-<<<<<<< HEAD
 (define WALL_VERT_DENIED
   (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" "red"))
 
@@ -686,9 +576,6 @@
            (rectangle (* 0.8 TILE_SIZE) (* 2 WALL_THICKNESS) "solid" "Light Green")
            )))
 
-
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 ;; -> Image
 ;; gives back a Square with BOARD_SIZE x BOARD_SIZE elements of type TYLE
 (define (render-empty-board)
@@ -721,25 +608,17 @@
 ;; on an image
 (define (render-player player image)
   (let ([x (first (cell->NWCorner (player-cell player)))]
-<<<<<<< HEAD
         [y (second (cell->NWCorner (player-cell player)))]
         [token (render-token (player-id player) (player-remaining-walls player))])
   (overlay/xy
    token
    (- x (/ (- (image-width TILE) (image-width token)) 2))
    (- y (/ (- (image-height TILE) (image-height token)) 2))
-=======
-        [y (second (cell->NWCorner (player-cell player)))])
-  (overlay/xy
-   (render-token (player-id player) (player-remaining-walls player))
-   x y
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
    image)))
 
 ;; id, remaining-walls -> Image
 ;; renders the player token and the number of remaining walls
 (define (render-token id remaining-walls)
-<<<<<<< HEAD
   (let* ([token (cond
                  [(equal? id 1) PLAYER1]
                  [(equal? id 2) PLAYER2]
@@ -751,15 +630,6 @@
      (text (number->string remaining-walls) 30 "white")
      token
    )))
-=======
-  (overlay (text (number->string remaining-walls) 30 "black")
-           (cond
-     [(equal? id 1) PLAYER1]
-     [(equal? id 2) PLAYER2]
-     [(equal? id 3) PLAYER3]
-     [(equal? id 4) PLAYER4]
-     )))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 ;; PlayersList Image -> Image
 ;; lays all players found in the players list onto another image
@@ -772,7 +642,6 @@
 (define (render-wall wall image)
   (let ([x (first (cell->NWCorner (wall-cell wall)))]
         [y (second (cell->NWCorner (wall-cell wall)))])
-<<<<<<< HEAD
    (cond
      [(equal? (wall-orientation wall) "vertical") (overlay/xy WALL_VERT
                                                               (+ x (/ WALL_THICKNESS 2))
@@ -786,17 +655,6 @@
       (raise (string-append "faulty wall orientation: " (wall-orientation wall)) #t)]
      )
     ))
-=======
-  (overlay/xy
-   (cond
-     [(equal? (wall-orientation wall) "vertical") WALL_VERT]
-     [(equal? (wall-orientation wall) "horizontal") WALL_HORZ]
-     [(not (member (wall-orientation wall) '("vertical" "horizontal")))
-      (raise (string-append "faulty wall orientation: " (wall-orientation wall)) #t)]
-     )
-    x y
-   image)))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
@@ -815,7 +673,6 @@
    x y
    image)))
 
-<<<<<<< HEAD
 ;; Special Image -> Image
 ;; Renders a special image with the correct frame and the correct position
 ;; on an image
@@ -830,8 +687,6 @@
          x y
          image))))
 
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
 (define (render-pos-moves moves image)
@@ -841,10 +696,7 @@
 ;; this is the rendering function for the state, where the player is active
 (define (render-active-game ws)
   ((compose
-<<<<<<< HEAD
     (curry render-special (ws-special ws))
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
     (curry render-walls (ws-walls ws))
     (curry render-players (ws-players ws))
     (curry render-pos-moves (possibleCells (ws-players ws) (ws-current-player ws) ws))
@@ -880,7 +732,6 @@
 
 ;; WorldState Integer Integer MouseEvent -> WorldState
 ;; Test function to check interaction. Moves second player to clicked cell
-<<<<<<< HEAD
 (define (mouse-action ws x y me)
   (let ([gs (ws-gamestate ws)]
         [cp (ws-current-player ws)]
@@ -951,26 +802,6 @@
         [else ws]
         )
     ))
-=======
-(define (mouse-click ws x y me)
-  (let ([gs (ws-gamestate ws)]
-        [cp (ws-current-player ws)]
-        [clicked-cell (second (clicked-area x y))]
-        [area (first (clicked-area x y))])
-  (cond [(and (mouse=? me "button-down")
-              (equal? gs "active-game")
-              (equal? area "center"))
-          (movePlayer ws clicked-cell cp)]
-        [(and (mouse=? me "button-down")
-              (equal? gs "active-game")
-              (equal? area "h-edge"))
-          (addWall ws clicked-cell "horizontal" cp)]
-        [(and (mouse=? me "button-down")
-              (equal? gs "active-game")
-              (equal? area "v-edge"))
-          (addWall ws clicked-cell "vertical" cp)]
-        [else ws])))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 
 ;; WorldState key-event -> WorldState
@@ -988,10 +819,6 @@
          (changeCurrentPlayer ws 4)]
         [else ws]))
 
-<<<<<<< HEAD
-
-=======
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 ; number number -> (list Area, cell)
 ; returns the Area that was clicked, according to this
 ; scheme:
@@ -1044,11 +871,7 @@
 (define (main ws)
   (big-bang ws
     [to-draw render-state]
-<<<<<<< HEAD
     [on-mouse mouse-action]
-=======
-    [on-mouse mouse-click]
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
     [on-key key-press]
     [register LOCALHOST]
     [state #f]
@@ -1078,11 +901,7 @@
         (make-wall (make-cell 3 2) "horizontal")))
 
 ; let's say it's the turn of player 1
-<<<<<<< HEAD
 (define test-ws (make-ws test-players test-walls 2 "main-menu" null))
-=======
-(define test-ws (make-ws test-players test-walls 2 "main-menu"))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 (define new-game-4
   (make-ws (list
@@ -1092,11 +911,7 @@
             (make-player 4 (make-cell 8 4) 5))
            '()
            1
-<<<<<<< HEAD
            "active-game" null))
-=======
-           "active-game"))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
 
 (define almost-won-2
   (make-ws (list
@@ -1106,11 +921,8 @@
                  (make-wall (make-cell 7 7) "vertical")
                  )
            1
-<<<<<<< HEAD
            "active-game" null))
-=======
-           "active-game"))
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
+
 
 (define player-1-blocked
   (make-ws (list
@@ -1121,17 +933,8 @@
                  (make-wall (make-cell 7 7) "vertical")
                  )
            1
-<<<<<<< HEAD
            "active-game" null))
 
 
 
 (main new-game-4)
-
-
-=======
-           "active-game"))
-
-
-(main new-game-4)
->>>>>>> d2ae631f2d6632b532e1c231d7d2525b16264f05
