@@ -118,9 +118,9 @@
   (let* ([vert_finish (apply above (map (lambda (x) FIN_MOVE) (range BOARD_SIZE)))]
          [horz_finish (apply beside (map (lambda (x) FIN_MOVE) (range BOARD_SIZE)))]
          [anchor_cell
-         (cond [(= id 1) (make-cell 0 8)]
+         (cond [(= id 1) (make-cell 0 (sub1 BOARD_SIZE))]
                [(= id 2) (make-cell 0 0)]
-               [(= id 3) (make-cell 8 0)]
+               [(= id 3) (make-cell (sub1 BOARD_SIZE) 0)]
                [(= id 4) (make-cell 0 0)]
                )]
          [finish_line
