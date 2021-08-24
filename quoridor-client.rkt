@@ -31,9 +31,35 @@
 ;; Banner/Electronic: https://www.coolgenerator.com/ascii-text-generator
 
 ; WorldState Message -> WorldState
+; the received message is a list consisting of:
+; (list msgS2W acitvePlayer lastMove)
+; msgS2W is one of:
+; 'wait-for-players, 'active, 'passive, 'won, 'lost, 'newGame, 'wait-or-play, 'rejected, 'voted
+; Last move is a list of the form:
+; (list move x y)
+; where move is either 'wall or 'player 
+; Example:
+; (list 'play 1 (list 'wall 1 3))
+
 (define (receive ws message)
-  (changeGameState ws message)
-  )
+  (let* ([activePlayer (second message)]
+        [msgS2W (first message)]
+        [lastMove (third message)]
+        [movedObject (first lastMove)]
+        [x (second lastMove)]
+        [y (third lastMove)])
+  (cond
+    [(= msgS2W 'wait-for-players)  (changeGameState ws 'wait-for-players)]
+    [(= msgS2W 'active) ws]
+    [(= msgS2W 'passive) ws]
+    [(= msgS2W 'won) ws]
+    [(= msgS2W 'lost) ws]
+    [(= msgS2W 'newGame) ws]
+    [(= msgS2W 'wait-or-play) ws]
+    [(= msgS2W 'rejected) ws]
+    [(= msgS2W 'voted) ws]
+    [else ws])
+  ))
 
 
  ; #     #                                             

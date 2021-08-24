@@ -241,10 +241,21 @@
                             (image-height (render-empty-board)
                                           )))))
 
+'wait-for-players
+;; WorldState -> Image
+;; this is the rendering function for the main-menu
+(define (render-wait-for-players ws)
+  (place-image (text "Waiting for other players..." 20 "black") 250 150
+  (place-image (text "Quoridor" 36 "indigo") 200 100
+               (empty-scene (image-width (render-empty-board))
+                            (image-height (render-empty-board)
+                                          )))))
+
 ;; WorldState -> Image
 ;; layers all render functions for the final game-board
 (define (render-state ws)
   (cond
     [(equal? (ws-gamestate ws) "active-game") (render-active-game ws)]
     [(equal? (ws-gamestate ws) "main-menu") (render-main-menu ws)]
+    [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)] 
     ))
