@@ -30,36 +30,86 @@
 
 ;; Banner/Electronic: https://www.coolgenerator.com/ascii-text-generator
 
+;  #####                                                                           
+; #     #  ####  #    # #    # #    # #    # #  ####    ##   ##### #  ####  #    # 
+; #       #    # ##  ## ##  ## #    # ##   # # #    #  #  #    #   # #    # ##   # 
+; #       #    # # ## # # ## # #    # # #  # # #      #    #   #   # #    # # #  # 
+; #       #    # #    # #    # #    # #  # # # #      ######   #   # #    # #  # # 
+; #     # #    # #    # #    # #    # #   ## # #    # #    #   #   # #    # #   ## 
+;  #####   ####  #    # #    #  ####  #    # #  ####  #    #   #   #  ####  #    # 
+
+
 ; WorldState Message -> WorldState
 ; the received message is a list consisting of:
 ; (list msgS2W acitvePlayer lastMove)
 ; msgS2W is one of:
-; 'wait-for-players, 'active, 'passive, 'won, 'lost, 'newGame, 'wait-or-play, 'rejected, 'voted
+; 'wait-for-players, 'wait, 'play , 'won, 'lost, 'start2play, 'start2wait,
+; 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted
 ; Last move is a list of the form:
-; (list move x y)
+; (list move x y orientation)
 ; where move is either 'wall or 'player 
 ; Example:
-; (list 'play 1 (list 'wall 1 3))
+; (list 'play 1 (list 'wall 1 3 "horizontal"))
 
 (define (receive ws message)
-  (let* ([activePlayer (second message)]
+  (let ([activePlayer (second message)]
         [msgS2W (first message)]
-        [lastMove (third message)]
-        [movedObject (first lastMove)]
-        [x (second lastMove)]
-        [y (third lastMove)])
+        )
   (cond
-    [(= msgS2W 'wait-for-players)  (changeGameState ws 'wait-for-players)]
-    [(= msgS2W 'active) ws]
-    [(= msgS2W 'passive) ws]
-    [(= msgS2W 'won) ws]
-    [(= msgS2W 'lost) ws]
-    [(= msgS2W 'newGame) ws]
-    [(= msgS2W 'wait-or-play) ws]
-    [(= msgS2W 'rejected) ws]
-    [(= msgS2W 'voted) ws]
-    [else ws])
-  ))
+    ; neither 2 or 4 players on server
+    [(symbol=? msgS2W 'wait-for-players)
+     (changeGameState ws 'wait-for-players)]
+    ;start a new 2 player game in waiting state
+    [(symbol=? msgS2W 'start2wait)
+     (changeGameState new-game-2 "passive-game")]
+    ;start a new 2 player game in playing state
+    [(symbol=? msgS2W 'start2play)
+     (changeGameState new-game-2 "active-game")]
+    ;start a new 4 player game in waiting state
+    [(symbol=? msgS2W 'start4wait)
+     (changeGameState new-game-4 "passive-game")]
+    ;start a new 4 player game in playing state
+    [(symbol=? msgS2W 'start4play)
+     (changeGameState new-game-4 "active-game")]
+    ; cast vote for 2 or 4 player game
+    [(symbol=? msgS2W 'wait-or-play)
+     (changeGameState new-game-4 'wait-or-play)]
+    ; server is full
+    [(symbol=? msgS2W 'rejected)
+     (changeGameState ws 'rejected)]
+    [(symbol=? msgS2W 'voted)
+      (changeGameState ws 'voted)]
+    ; new game has started => 'play or 'wait and lastMove is empty
+    
+    ; states where lastMove is included
+    [else (let* (
+                 [lastMove (third message)]
+                 [movedObject (first lastMove)]
+                 [x (second lastMove)]
+                 [y (third lastMove)]
+                 [nextws (cond
+                           [(symbol=? movedObject 'wall)
+                            (addWall ws (make-cell x y)
+                                     (symbol->string (cadddr lastMove))
+                                     activePlayer)]
+                           [(symbol=? movedObject 'player)
+                           (movePlayer ws
+                                       (make-cell x y)
+                                       activePlayer)]
+                           [else ws])])
+            (cond
+              ; player can make a move
+              [(symbol=? msgS2W 'play)
+               (changeGameState nextws "active-game")]
+              ; player has to wait, other player made a move
+              [(symbol=? msgS2W 'wait)
+               (changeGameState nextws "passive-game")]
+              ; player has won
+              [(symbol=? msgS2W 'won) nextws]
+              ; other player has won
+              [(symbol=? msgS2W 'lost) nextws]
+              [else ws]))]
+  )))
 
 
  ; #     #                                             
@@ -80,6 +130,22 @@
     [state #f]
     [on-receive receive])
   )
+
+;; blank start game states
+(define new-game-4
+  (make-ws (list
+            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 5)
+            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 5)
+            (make-player 3 (make-cell 0 (/ (sub1 BOARD_SIZE) 2)) 5)
+            (make-player 4 (make-cell (sub1 BOARD_SIZE) 4) 5))
+           '() 1 "active-game" null))
+
+
+(define new-game-2
+  (make-ws (list
+            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
+            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
+           '() 1 "active-game" null))
 
 ;  ####### #######  #####  ####### ### #     #  #####  
 ;     #    #       #     #    #     #  ##    # #     # 
@@ -103,21 +169,6 @@
 (define test-ws (make-ws test-players test-walls 1 "main-menu" null))
 
 ; test worldstates
-(define new-game-4
-  (make-ws (list
-            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 5)
-            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 5)
-            (make-player 3 (make-cell 0 (/ (sub1 BOARD_SIZE) 2)) 5)
-            (make-player 4 (make-cell (sub1 BOARD_SIZE) 4) 5))
-           '() 1 "active-game" null))
-
-
-(define new-game-2
-  (make-ws (list
-            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
-            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
-           '() 1 "active-game" null))
-
 (define almost-won-2
   (make-ws (list (make-player 1 (make-cell 7 7) 8)
                  (make-player 2 (make-cell 4 8) 10))
@@ -133,5 +184,25 @@
                  (make-wall (make-cell 7 7) "vertical"))
            1 "active-game" null))
 
+;ausgabe spielfeld im fenster
+(define (create-world worldname)
+  (big-bang test-ws
+    [to-draw render-state]
+    [on-mouse mouse-action]
+    [on-key key-press]
+    [register LOCALHOST]
+    [state #f]
+    [on-receive receive]
+    [name worldname])
+  )
 
-(main new-game-4)
+
+; (main new-game-4)
+;;Macht zwei Welten auf
+(launch-many-worlds 
+  (create-world "X")
+  (create-world "O")
+  (create-world "B")
+  (create-world "C")
+  )
+

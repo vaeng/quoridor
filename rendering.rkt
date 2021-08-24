@@ -233,6 +233,18 @@
    (render-empty-board)))
 
 ;; WorldState -> Image
+;; this is the rendering function for the state, where the player is active
+(define (render-passive-game ws)
+  ((compose
+    (curry render-special (ws-special ws))
+    (curry render-walls (ws-walls ws))
+    (curry render-players (ws-players ws))
+    (curry render-pos-moves (possibleCells (ws-players ws) (ws-current-player ws) ws))
+    (curry render-finish (ws-current-player ws))
+    )
+   (render-empty-board)))
+
+;; WorldState -> Image
 ;; this is the rendering function for the main-menu
 (define (render-main-menu ws)
   (place-image (text "press 's' to start game" 20 "black") 250 150
@@ -241,11 +253,39 @@
                             (image-height (render-empty-board)
                                           )))))
 
-'wait-for-players
+
 ;; WorldState -> Image
-;; this is the rendering function for the main-menu
+;; this is the rendering function for the waiting room
 (define (render-wait-for-players ws)
   (place-image (text "Waiting for other players..." 20 "black") 250 150
+  (place-image (text "Quoridor" 36 "indigo") 200 100
+               (empty-scene (image-width (render-empty-board))
+                            (image-height (render-empty-board)
+                                          )))))
+
+;; WorldState -> Image
+;; this is the rendering function for the rejected message
+(define (render-rejected ws)
+  (place-image (text "Server is full." 20 "black") 250 150
+  (place-image (text "Quoridor" 36 "indigo") 200 100
+               (empty-scene (image-width (render-empty-board))
+                            (image-height (render-empty-board)
+                                          )))))
+
+;; WorldState -> Image
+;; this is the rendering function for the rejected message
+(define (render-voted ws)
+  (place-image (text "Waiting for other player to vote." 20 "black") 250 150
+  (place-image (text "Quoridor" 36 "indigo") 200 100
+               (empty-scene (image-width (render-empty-board))
+                            (image-height (render-empty-board)
+                                          )))))
+
+;; WorldState -> Image
+;; this is the rendering function for the voting screen
+(define (render-voting ws)
+  (place-image (text "Do you want to (s)tart with 2 players, or (w)ait for four?
+                                Press 's' or 'w'." 20 "black") 250 150
   (place-image (text "Quoridor" 36 "indigo") 200 100
                (empty-scene (image-width (render-empty-board))
                             (image-height (render-empty-board)
@@ -256,6 +296,10 @@
 (define (render-state ws)
   (cond
     [(equal? (ws-gamestate ws) "active-game") (render-active-game ws)]
+    [(equal? (ws-gamestate ws) "passive-game") (render-passive-game ws)]
     [(equal? (ws-gamestate ws) "main-menu") (render-main-menu ws)]
+    [(equal? (ws-gamestate ws) 'rejected) (render-rejected ws)]
+    [(equal? (ws-gamestate ws) 'voted) (render-voted ws)]
+    [(equal? (ws-gamestate ws) 'wait-or-play) (render-voting ws)]
     [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)] 
     ))

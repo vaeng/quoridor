@@ -36,11 +36,28 @@
   (cond [(equal? gs "active-game")
          (cond [(mouse=? me "button-down") 
                 (cond [(equal? area "center")
-                       (movePlayer ws clicked-cell cp)]
+                       ;(movePlayer ws clicked-cell cp)
+                       (make-package ws
+                                     (list 'move
+                                           'player
+                                           (cell-x clicked-cell)
+                                           (cell-y clicked-cell)))]
                       [(equal? area "h-edge")
-                       (addWall ws clicked-cell "horizontal" cp)]
+                       ;(addWall ws clicked-cell "horizontal" cp)
+                       (make-package ws
+                                     (list 'move
+                                           'wall
+                                           (cell-x clicked-cell)
+                                           (cell-y clicked-cell)
+                                           'horizontal))]
                       [(equal? area "v-edge")
-                       (addWall ws clicked-cell "vertical" cp)]
+                       ;(addWall ws clicked-cell "vertical" cp)
+                       (make-package ws
+                                     (list 'move
+                                           'wall
+                                           (cell-x clicked-cell)
+                                           (cell-y clicked-cell)
+                                           'vertical))]
                       [else ws])]
                [(mouse=? me "move")
                 (cond [(equal? area "center")                       
@@ -115,4 +132,9 @@
          (changeCurrentPlayer ws 3)]
         [(and (key=? ke "4") (equal? (ws-gamestate ws) "active-game"))
          (changeCurrentPlayer ws 4)]
+        [(and (key=? ke "w") (equal? (ws-gamestate ws) 'wait-or-play))
+         (make-package ws (list 'wait))]
+        [(and (key=? ke "s") (equal? (ws-gamestate ws) 'wait-or-play))
+         (make-package ws (list 'play))]
+       
         [else ws]))

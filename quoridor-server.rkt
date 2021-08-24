@@ -545,8 +545,8 @@
 
 ;; START DES UNIVERSUMS
 
-;;(universe UNIVERSE0
-        ;;  (on-new add-world)
-        ;;  (on-msg handle-messages))
+(universe UNIVERSE0
+          (on-new add-world)
+          (on-msg handle-messages))
 
-(test)
+;(test)
