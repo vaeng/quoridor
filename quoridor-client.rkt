@@ -111,6 +111,13 @@
             (make-player 4 (make-cell (sub1 BOARD_SIZE) 4) 5))
            '() 1 "active-game" null))
 
+
+(define new-game-2
+  (make-ws (list
+            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
+            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
+           '() 1 "active-game" null))
+
 (define almost-won-2
   (make-ws (list (make-player 1 (make-cell 7 7) 8)
                  (make-player 2 (make-cell 4 8) 10))

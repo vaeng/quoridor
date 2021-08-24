@@ -62,7 +62,10 @@
                                                        (/ WALL_THICKNESS 2))])
                                                     
                                                     (cond
-                                                      [(= 0 (cell-y clicked-cell)) empty-image]
+                                                      [(or
+                                                        (= 0 (cell-y clicked-cell))
+                                                        (= BOARD_SIZE (cell-y clicked-cell)))
+                                                           empty-image]
                                                       [(wallOK? (ws-walls ws)
                                                                  players
                                                                  clicked-cell
@@ -79,7 +82,9 @@
                                                        (/ WALL_THICKNESS 2))])                                       
                                                     (cell->NWCorner-y clicked-cell)
                                                     (cond
-                                                      [(= 0 (cell-x clicked-cell)) empty-image]
+                                                      [(or
+                                                        (= 0 (cell-x clicked-cell))
+                                                        (= BOARD_SIZE (cell-x clicked-cell))) empty-image]
                                                       [(wallOK? (ws-walls ws)
                                                                  players
                                                                  clicked-cell
