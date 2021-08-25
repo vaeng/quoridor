@@ -313,49 +313,31 @@
 ;; WorldState -> Image
 ;; this is the rendering function for the main-menu
 (define (render-main-menu ws)
-  (place-image (text "press 's' to start game" 20 "black") 250 150
-  (place-image (text "Quoridor" 36 "indigo") 200 100
-               (empty-scene (image-width (render-empty-board))
-                            (image-height (render-empty-board)
-                                          )))))
-
+  (generate-msg-screen
+   "Press 's' to start game."))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the waiting room
 (define (render-wait-for-players ws)
-  (place-image (text "Waiting for other players..." 20 "black") 250 150
-  (place-image (text "Quoridor" 36 "indigo") 200 100
-               (empty-scene (image-width (render-empty-board))
-                            (image-height (render-empty-board)
-                                          )))))
+  (generate-msg-screen
+     "Waiting for other players..."))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the rejected message
 (define (render-rejected ws)
-  (place-image (text "Server is full." 20 "black") 250 150
-  (place-image (text "Quoridor" 36 "indigo") 200 100
-               (empty-scene (image-width (render-empty-board))
-                            (image-height (render-empty-board)
-                                          )))))
+    (generate-msg-screen "Server is full."))
 
 ;; WorldState -> Image
-;; this is the rendering function for the rejected message
+;; this is the rendering function for the voted message
 (define (render-voted ws)
-  (place-image (text "Waiting for other player to vote." 20 "black") 250 150
-  (place-image (text "Quoridor" 36 "indigo") 200 100
-               (empty-scene (image-width (render-empty-board))
-                            (image-height (render-empty-board)
-                                          )))))
+  (generate-msg-screen
+   "Waiting for other player to vote."))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the voting screen
 (define (render-voting ws)
-  (place-image (text "Do you want to (s)tart with 2 players, or (w)ait for four?
-                                Press 's' or 'w'." 20 "black") 250 150
-  (place-image (text "Quoridor" 36 "indigo") 200 100
-               (empty-scene (image-width (render-empty-board))
-                            (image-height (render-empty-board)
-                                          )))))
+  (generate-msg-screen
+   "Do you want to (s)tart with 2 players,\nor (w)ait for four?\nPress 's' or 'w'."))
 
 ;; WorldState -> Image
 ;; layers all render functions for the final game-board
@@ -423,4 +405,18 @@
           (o-part PLAYER2))]
         )
     (beside quid-part oo-part rr-part)))
-    
+
+(define centered-logo
+  (overlay/align "center" "center"
+                 logo
+                 (square (image-height (render-empty-board)) "solid" BACKGROUND_COLOR)))
+
+(define (generate-msg-screen msg)
+  (let ([gap (* 0.25 TILE_SIZE)])
+  (overlay/xy (text msg 20 "white")
+              (- (- (* 0.5 (image-height (render-empty-board)))
+                    (* 0.5 (image-width logo))))
+              (- (+ (* 0.5 (image-height (render-empty-board)))
+                    (* 0.5 (image-height logo))
+                    gap))          
+              centered-logo)))
