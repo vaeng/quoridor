@@ -450,8 +450,8 @@
 (check-expect
  (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'vertikal)) iworld2 (list 'move 'wall 5 6 'horizontal))
  (make-bundle (list (list (cons iworld1 1) (cons iworld2 2)) '2players (list 2 'wall 5 6 'horizontal))
-              (list (make-mail iworld2 (list 'wait 1 (list 2 'wall 5 6 'horizontal)))
-                    (make-mail iworld1 (list 'play 1 (list 2 'wall 5 6 'horizontal))))
+              (list (make-mail iworld2 (list 'wait 2 (list 'wall 5 6 'horizontal)))
+                    (make-mail iworld1 (list 'play 2 (list 'wall 5 6 'horizontal))))
               '()))
 
 
@@ -459,8 +459,8 @@
 (check-expect
  (handle-messages (list (list (cons iworld2 2) (cons iworld3 3) (cons iworld4 4) (cons iworld1 1)) '4players (list 1 'player 4 2 'horizontal)) iworld2 (list 'move 'wall 5 6 'horizontal))
  (make-bundle (list (list (cons iworld3 3) (cons iworld4 4) (cons iworld1 1) (cons iworld2 2)) '4players (list 2 'wall 5 6 'horizontal))
-              (append (map (curryr make-mail (list 'wait 3 (list 2 'wall 5 6 'horizontal))) (list iworld1 iworld2 iworld4))
-                      (list (make-mail  iworld3 (list 'play 3 (list 2 'wall 5 6 'horizontal)))))
+              (append (map (curryr make-mail (list 'wait 2 (list 'wall 5 6 'horizontal))) (list iworld1 iworld2 iworld4))
+                      (list (make-mail iworld3 (list 'play 2 (list 'wall 5 6 'horizontal)))))
               '()))
 
 ;; World, die nicht am Zug ist, möchte eine Bewegung machen
@@ -478,26 +478,7 @@
               '()))
 
 
-;; TESTS FÜR DAS SPIELENDE
 
-;; World erreicht die Win-Condition im Zwei-Spieler-Spiel
-(check-expect (winningMove? '(1 'player 1 (sub1 BOARD_SIZE)))
-              #t)
-(check-expect (winningMove? '(2 'player 3 0))
-              #t)
-
-
-;; World erreicht die Win-Condition im Vier-Spieler-Spiel
-(check-expect (winningMove? '(3 'player (sub1 BOARD_SIZE) 4))
-              #t)
-(check-expect (winningMove? '(4 'player 0 7))
-              #t)
-
-;; World erreicht die Win-Condition nicht
-(check-expect (winningMove? '(2 wall 3 4))
-              #f)
-(check-expect (winningMove? '(4 'player 1 4))
-              #f)
 
 
 ;IMPLEMENTATION
@@ -578,7 +559,7 @@
 
 
         ;; Leite Zug an alle im Vier-Spieler-Spiel weiter und ändere den aktiven Spieler
-        [(equal? (get_State univ) '4player)
+        [(equal? (get_State univ) '4players)
          
          ;; prüfe ob es vier Spieler sind
          (if (= (length (get_Worlds univ)) 4)
@@ -588,13 +569,13 @@
                  
                  ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
                  (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
-                          (append (curryr make-mail (composeMail univ m wrld 'lost) (get_Inactive_iWorlds univ)) 
+                          (append (map (curryr make-mail (composeMail univ m wrld 'lost)) (get_Inactive_iWorlds univ)) 
                           (list (make-mail wrld (composeMail univ m wrld 'won))))
                           '())
                  
                  ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
                  (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
-                              (append (curryr make-mail (composeMail univ m wrld 'wait) (append (list (get_Active_iWorld univ)) (get_Inactive_iWorlds_3_4 univ)))
+                              (append (map (curryr make-mail (composeMail univ m wrld 'wait)) (append (list (get_Active_iWorld univ)) (get_Inactive_iWorlds_3_4 univ)))
                                       (list (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'play))))
                               '()))
              
@@ -679,12 +660,30 @@
       [else #f]
       )))
 
+;; TESTS FÜR DAS SPIELENDE
+
+;; World erreicht die Win-Condition im Zwei-Spieler-Spiel
+(check-expect (winningMove? (list 1 'player 1 (sub1 BOARD_SIZE) 'horizontal))
+              #t)
+(check-expect (winningMove? (list 2 'player 3 0 'horizontal))
+              #t)
+
+
+;; World erreicht die Win-Condition im Vier-Spieler-Spiel
+(check-expect (winningMove? (list 3 'player (sub1 BOARD_SIZE) 4 'horizontal))
+              #t)
+(check-expect (winningMove? (list 4 'player 0 7 'horizontal))
+              #t)
+
+;; World erreicht die Win-Condition nicht
+(check-expect (winningMove? (list 2 'wall 3 4 'horizontal))
+              #f)
+(check-expect (winningMove? (list 4 'player 1 4 'horizontal))
+              #f)
+
 
 ;; START DES UNIVERSUMS
 
-;;(universe UNIVERSE0
-;;  (on-new add-world)
-;;  (on-msg handle-messages))
 
 ; (test)
 
