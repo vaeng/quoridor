@@ -44,7 +44,7 @@
 ; (list msgS2W acitvePlayer lastMove)
 ; msgS2W is one of:
 ; 'wait-for-players, 'wait, 'play , 'won, 'lost, 'start2play, 'start2wait,
-; 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted
+; 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted, 'disconnect
 ; Last move is a list of the form:
 ; (list move x y orientation)
 ; where move is either 'wall or 'player 
@@ -67,7 +67,7 @@
     [(symbol=? msgS2W 'start2wait)
       (changeCurrentPlayer (changeGameState new-game-2 "passive-game") 1)]
     ;start a new 2 player game in waiting state
-    [(symbol=? msgS2W 'disconnected)
+    [(symbol=? msgS2W 'disconnect)
       (changeCurrentPlayer (changeGameState new-game-2 'disconnect) 1)]
     ;start a new 2 player game in playing state
     [(symbol=? msgS2W 'start2play)
