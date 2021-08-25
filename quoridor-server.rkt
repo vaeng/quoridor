@@ -509,13 +509,13 @@
     ;; es hat noch keiner abgestimmt
     [(equal? (get_State univ) '2p?)
      ;; einer der beiden will nicht warten -> starte zu zweit
-     (if (equal? (first m) 'play)
+     (if (equal? (get_Msg_Mail m) 'play)
          (make-bundle (list (get_Worlds univ) '2players '())
                       (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
                               (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
                       '())
          ;; einer der beiden will warten, ermittle wer
-         (if (equal? (get_ID_from_iWorld wrld univ) 1)
+         (if (equal? (get_ID_from_iWorld wrld univ) (get_Active_ID univ))
              ;; Spieler 1 will warten, benachrichtige ihn über erfolgreiche Abstimmung
              (make-bundle (list (get_Worlds univ) '2pw1a '())
                           (list (make-mail wrld (list 'voted 0 '())))
@@ -528,22 +528,42 @@
     ;; es hat die erste Welt akzeptiert zu warten
     [(equal? (get_State univ) '2pw1a)
      ;; Versucht Spieler 1 nochmal abzustimmen?
-     (if (equal? (get_ID_from_iWorld wrld univ) 1)
-         (make-bundle univ '() '()) 
-         ;; Es ist Spieler 2, gehe in Wartephase über
-         (make-bundle (list (get_Worlds univ) '4players '())
-                      (map (curryr make-mail (list 'wait-for-players 0 '())) (get_iWorlds univ))
-                      '()))]
+     (if (equal? (get_ID_from_iWorld wrld univ) (get_Active_ID univ))
+         (make-bundle univ '() '())
+         
+         ;; Es ist Spieler 2, prüfe ob er starten will oder auch warten
+         (if (equal? (get_Msg_Mail m) 'play)
+             ;; Spieler 2 will starten -> Starte Spiel
+         
+             (make-bundle (list (get_Worlds univ) '2players '())
+                      (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
+                              (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
+                      '())
+
+             ;; Spieler 2 will auch warten
+             (make-bundle (list (get_Worlds univ) '4players '())
+                          (map (curryr make-mail (list 'wait-for-players 0 '())) (get_iWorlds univ))
+                          '())))]
     
     ;; es hat die zweite Welt akzeptiert zu warten
     [(equal? (get_State univ) '2pw2a)
      ;; Versucht Spieler 2 nochmal abzustimmen?
-     (if (equal? (get_ID_from_iWorld wrld univ) 2)
+     (if (equal? (get_ID_from_iWorld wrld univ) (get_ID_from_iWorld (get_next_Inactive_iWorld univ) univ))
          (make-bundle univ '() '())
-         ;; Es ist Spieler 1, gehe in Wartephase über
-         (make-bundle (list (get_Worlds univ) '4players '())
-                      (map (curryr make-mail (list 'wait-for-players 0 '())) (get_iWorlds univ))
-                      '()))]
+         
+         ;; Es ist Spieler 1, prüfe ob er starten will oder nicht
+         (if (equal? (get_Msg_Mail m) 'play)
+             ;; Spieler 1 will starten -> Starte Spiel
+         
+             (make-bundle (list (get_Worlds univ) '2players '())
+                      (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
+                              (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
+                      '())
+
+             ;; Spieler 1 will auch warten
+             (make-bundle (list (get_Worlds univ) '4players '())
+                          (map (curryr make-mail (list 'wait-for-players 0 '())) (get_iWorlds univ))
+                          '())))]
     
     ;; die Welten sind nicht im Abstimmungsmodus
     [else (make-bundle univ '() '())]))
@@ -569,9 +589,9 @@
                  
                  ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
                  (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
-                          (append (map (curryr make-mail (composeMail univ m wrld 'lost)) (get_Inactive_iWorlds univ)) 
-                          (list (make-mail wrld (composeMail univ m wrld 'won))))
-                          '())
+                              (append (map (curryr make-mail (composeMail univ m wrld 'lost)) (get_Inactive_iWorlds univ)) 
+                                      (list (make-mail wrld (composeMail univ m wrld 'won))))
+                              '())
                  
                  ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
                  (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
@@ -592,7 +612,7 @@
              ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
              (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
                           (list (make-mail wrld (composeMail univ m wrld 'won))
-                          (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'lost)))
+                                (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'lost)))
                           '())
                  
              ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
@@ -690,6 +710,6 @@
 
 
 
- (universe UNIVERSE0
-           (on-new add-world)
-           (on-msg handle-messages))
+(universe UNIVERSE0
+          (on-new add-world)
+          (on-msg handle-messages))
