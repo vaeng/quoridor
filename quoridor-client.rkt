@@ -206,7 +206,7 @@
     [on-mouse mouse-action]
     [on-tick update-frame]
     [on-key key-press]
-    [register host-adress]
+    [register host-adress] ;host-adress]
     [port custom-port]
     [state #f]
     [on-receive receive]
@@ -220,7 +220,7 @@
 
 (launch-many-worlds 
   (create-world "Player 1")
-  (create-world "Player 2")
+ ; (create-world "Player 2")
  ; (create-world "Player 3")
  ; (create-world "Player 4")
   )
