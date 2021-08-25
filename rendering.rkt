@@ -314,30 +314,33 @@
 ;; this is the rendering function for the main-menu
 (define (render-main-menu ws)
   (generate-msg-screen
-   "Press 's' to start game."))
+   "Press 's' to start game." 0))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the waiting room
 (define (render-wait-for-players ws)
   (generate-msg-screen
-     "Waiting for other players..."))
+     "Waiting for other players..."
+     (special-frame (ws-special ws))))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the rejected message
 (define (render-rejected ws)
-    (generate-msg-screen "Server is full."))
+    (generate-msg-screen "Server is full." 0))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the voted message
 (define (render-voted ws)
   (generate-msg-screen
-   "Waiting for other player to vote."))
+   "Waiting for other player to vote."
+   (special-frame (ws-special ws))))
 
 ;; WorldState -> Image
 ;; this is the rendering function for the voting screen
 (define (render-voting ws)
   (generate-msg-screen
-   "Do you want to (s)tart with 2 players,\nor (w)ait for four?\nPress 's' or 'w'."))
+   "Press 's' to start a 2-player game.\nOr 'w' to wait for other players."
+   0))
 
 ;; WorldState -> Image
 ;; layers all render functions for the final game-board
@@ -356,7 +359,7 @@
 ;; updates the frame for animations
 (define (update-frame ws)
   (if (empty? (ws-special ws))
-      ws
+      (changeSpecial ws (make-special 0 0 empty-image 0 100000))
       (let* ([oldspecial (ws-special ws)]
          [x (special-x oldspecial)]
          [y (special-y oldspecial)]
@@ -369,12 +372,57 @@
          [newspecial (make-special  x y img newframe lastframe)])
         (changeSpecial ws newspecial))))
 
-;; temporary definition for dev
-(define new-game-2
-  (make-ws (list
-            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
-            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
-           '() 1 "active-game" null))
+(define (moving-logo frame)
+  (let* (
+         [font-size 75]
+         [o-size (* 0.8 font-size)]
+         [letter-gen (lambda (letter)
+                      (text/font letter font-size "white"
+                      "Gill Sans" 'swiss 'normal 'bold #f))]
+         [quid-part
+          (above (apply beside
+                       (map (lambda (letter)
+                              (overlay/align "center" "center" (letter-gen letter) TILE))
+                            (list "Q" "U" )))
+                (apply beside
+                       (map (lambda (letter)
+                              (overlay/align "center" "center" (letter-gen letter) TILE))
+                            (list "I" "D"))))]
+        [rr-part
+         (above 
+          (overlay/align "center" "center" (letter-gen "R") TILE)
+          (overlay/align "center" "center" (letter-gen "R") TILE))]
+        [o-part TILE]
+        [scaled-player1 (scale (/ o-size (image-height PLAYER1)) PLAYER1)]
+        [scaled-player2 (scale (/ o-size (image-height PLAYER2)) PLAYER2)]
+        [oo-gap (* 0.5 (- (image-height rr-part) (* 2 (image-height o-part))))]
+        [top-y (* 0.5 (+ oo-gap (image-height o-part))) ]
+        [bottom-y (- top-y)]
+        [y1 (- top-y (modulo frame (* 2 top-y)))]
+        [y2 (- y1)]
+        [oo-part
+         (overlay/align/offset "center" "center" scaled-player2 0 y2 
+          (overlay/align/offset "center" "center" scaled-player1 0 y1 
+                                (above o-part
+                                       (rectangle (image-width TILE) oo-gap "solid" (make-color 0 0 0 0))
+                                       o-part)))]
+        )
+    (beside quid-part oo-part rr-part)))
+
+(define (centered-logo frame)
+  (overlay/align "center" "center"
+                 (moving-logo frame)
+                 (square (image-height (render-empty-board)) "solid" BACKGROUND_COLOR)))
+
+(define (generate-msg-screen msg frame)
+  (let ([gap (* 0.25 TILE_SIZE)])
+  (overlay/xy (text/font msg 20 "white" "Gill Sans" 'modern 'normal 'light #f)
+              (- (- (* 0.5 (image-height (render-empty-board)))
+                    (* 0.5 (image-width (moving-logo 0)))))
+              (- (+ (* 0.5 (image-height (render-empty-board)))
+                    (* 0.5 (image-height (moving-logo 0)))
+                    gap))          
+              (centered-logo frame))))
 
 (define logo
   (let* ([font-size 75]
@@ -406,12 +454,13 @@
         )
     (beside quid-part oo-part rr-part)))
 
-(define centered-logo
+(define centered-logo-static
   (overlay/align "center" "center"
                  logo
                  (square (image-height (render-empty-board)) "solid" BACKGROUND_COLOR)))
 
-(define (generate-msg-screen msg)
+
+(define (generate-msg-screen-old msg)
   (let ([gap (* 0.25 TILE_SIZE)])
   (overlay/xy (text msg 20 "white")
               (- (- (* 0.5 (image-height (render-empty-board)))
@@ -419,4 +468,12 @@
               (- (+ (* 0.5 (image-height (render-empty-board)))
                     (* 0.5 (image-height logo))
                     gap))          
-              centered-logo)))
+              centered-logo-static)))
+
+
+;; temporary definition for dev
+(define new-game-2
+  (make-ws (list
+            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
+            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
+           '() 1 "active-game" null))

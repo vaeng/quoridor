@@ -37,11 +37,16 @@
          (cond [(mouse=? me "button-down") 
                 (cond [(equal? area "center")
                        ;(movePlayer ws clicked-cell cp)
-                       (make-package ws
-                                     (list 'move
-                                           'player
-                                           (cell-x clicked-cell)
-                                           (cell-y clicked-cell)))]
+                       (if (cellInList?
+                            (possibleCells players id ws)
+                            clicked-cell )
+                           (make-package ws
+                                         (list 'move
+                                               'player
+                                               (cell-x clicked-cell)
+                                               (cell-y clicked-cell)))
+                           ws)
+                       ]
                       [(equal? area "h-edge")
                        ;(addWall ws clicked-cell "horizontal" cp)
                        (make-package ws
