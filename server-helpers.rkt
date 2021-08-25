@@ -260,7 +260,7 @@
     ;; die Welten sind nicht im Abstimmungsmodus, ignoriere also ihre Anfragen
     [else (make-bundle univ '() '())]))
 
-
+;; -----------------------------------------------------------------------------
 ;; Universe World Mail -> Bundle
 ;; Hilfsfunktion um Spielzüge zu verarbeiten
 (define (handle-messages-move univ wrld m)
@@ -318,7 +318,7 @@
       ;; Spieler ist nicht dran, Zug wird ignoriert
       (make-bundle univ '() '())))
 
-
+;; -----------------------------------------------------------------------------
 ;; Universe World Mail -> Bundle
 ;; Hilfsfunktion um nach beendetem Spiel ein neues Spiel zu starten
 (define (handle-messages-reset univ wrld m)
@@ -332,18 +332,18 @@
           ;; prüft ob 2 oder 4 Spieler spielen
           (cond
             
-            ;; Informiert alle im Zwei-Spieler-Spiel dass ein neues Spiel beginnt
+            ;; Informiert alle im Zwei-Spieler-Spiel dass ein neues Spiel beginnt, der Verlierer fängt an
             [(equal? (length (get_Worlds univ)) 2)
-             (make-bundle (list (get_Worlds univ) '2players '())
-                          (append (map (curryr make-mail (list 'start2wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
-                                  (list (make-mail (get_Active_iWorld univ) (list 'start2play (get_Active_ID univ) '()))))
+             (make-bundle (list (updateWorlds univ wrld) '2players '())
+                          (append (list (make-mail (get_next_Inactive_iWorld univ)(list 'start2play 0 '())))
+                                  (list (make-mail (get_Active_iWorld univ) (list 'start2wait 0 '()))))
                           '())]
             
-            ;; Informiert alle im Vier-Spieler-Spiel das ein neues Spiel beginnt
+            ;; Informiert alle im Vier-Spieler-Spiel das ein neues Spiel beginnt, der Spieler nach dem Gewinner ist dran
             [(equal? (length (get_Worlds univ)) 4)
-             (make-bundle (list (get_Worlds univ) '4players '())
-                          (append (map (curryr make-mail (list 'start4wait (get_Active_ID univ) '())) (get_Inactive_iWorlds univ))
-                                  (list (make-mail (get_Active_iWorld univ) (list 'start4play (get_Active_ID univ) '()))))
+             (make-bundle (list (updateWorlds univ wrld) '4players '())
+                          (append (map (curryr make-mail (list 'start4wait 0 '())) (append (list (get_Active_iWorld univ)) (get_Inactive_iWorlds_3_4)))
+                                  (list (make-mail (get_next_Inactive_iWorld univ) (list 'start4play (get_Active_ID univ) '()))))
                           '())]
             
             ;; Fehlerhafter Zustand wird nicht beachtet
@@ -355,6 +355,7 @@
       ;; das Spiel ist nicht beendet. Nachricht wird ignoriert
       (make-bundle univ '() '())))
 
+;; -----------------------------------------------------------------------------
 ;; LastMove -> Boolean
 ;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat
 (define (winningMove? lastMove)
