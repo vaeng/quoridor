@@ -1,4 +1,3 @@
-
 #lang racket 
 (require 2htdp/image)
 (require 2htdp/universe)
@@ -45,17 +44,21 @@
         [(or (<= spielfeld_size x) (<= spielfeld_size y)) 0]
         [else  (if (get_vector_pos spielfeld x y) 1 0) ]))
 
+; helper function für alive-neighbours
+(define mod-fun
+  (curryr modulo spielfeld_size))
+
 ;; return number of alive-neighbours
 ;;Zusatzaufgabe   
 (define (alive-neighbours spielfeld x y)
-  ( + (alive? spielfeld (modulo (sub1 x) spielfeld_size) (modulo (sub1 y) spielfeld_size)) ;top-left
-      (alive? spielfeld x (modulo (sub1 y) spielfeld_size))        ;top-middle
-      (alive? spielfeld  (modulo (add1 x) spielfeld_size)(modulo (sub1 y) spielfeld_size))  ;top-right
-      (alive? spielfeld  (modulo (sub1 x) spielfeld_size) y) ;middle-left
-      (alive? spielfeld  (modulo (add1 x) spielfeld_size)y)  ;middle-right
-      (alive? spielfeld  (modulo (sub1 x) spielfeld_size) (modulo (add1 y) spielfeld_size)) ;bottom-left
-      (alive? spielfeld x (modulo (add1 y) spielfeld_size))        ;bottom-middle
-      (alive? spielfeld (modulo (add1 x) spielfeld_size)(modulo (add1 y) spielfeld_size))  ;bottom-right
+  ( + (alive? spielfeld (mod-fun (sub1 x)) (mod-fun (sub1 y))) ;top-left
+      (alive? spielfeld x (mod-fun (sub1 y)))        ;top-middle
+      (alive? spielfeld  (mod-fun (add1 x))(mod-fun (sub1 y)))  ;top-right
+      (alive? spielfeld  (mod-fun (sub1 x)) y) ;middle-left
+      (alive? spielfeld  (mod-fun (add1 x))y)  ;middle-right
+      (alive? spielfeld  (mod-fun (sub1 x)) (mod-fun (add1 y))) ;bottom-left
+      (alive? spielfeld x (mod-fun (add1 y)))        ;bottom-middle
+      (alive? spielfeld (mod-fun (add1 x))(mod-fun (add1 y)))  ;bottom-right
       ))
 
 ;; determines dead/alive for the next cycle per cell
