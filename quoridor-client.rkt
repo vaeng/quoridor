@@ -65,19 +65,19 @@
      (changeGameState ws 'wait-for-players)]
     ;start a new 2 player game in waiting state
     [(symbol=? msgS2W 'start2wait)
-      (changeCurrentPlayer (changeGameState new-game-2 "passive-game") 1)]
+      (changeCurrentPlayer (changeGameState new-game-2 "passive-game") lastplayer)]
     ;start a new 2 player game in waiting state
     [(symbol=? msgS2W 'disconnect)
-      (changeCurrentPlayer (changeGameState new-game-2 'disconnect) 1)]
+      (changeCurrentPlayer (changeGameState new-game-2 'disconnect) lastplayer)]
     ;start a new 2 player game in playing state
     [(symbol=? msgS2W 'start2play)
-      (changeCurrentPlayer (changeGameState new-game-2 "active-game" )1)]
+      (changeCurrentPlayer (changeGameState new-game-2 "active-game" )lastplayer)]
     ;start a new 4 player game in waiting state
     [(symbol=? msgS2W 'start4wait)
-      (changeCurrentPlayer (changeGameState new-game-4 "passive-game") 1)]
+      (changeCurrentPlayer (changeGameState new-game-4 "passive-game") lastplayer)]
     ;start a new 4 player game in playing state
     [(symbol=? msgS2W 'start4play)
-      (changeCurrentPlayer (changeGameState new-game-4 "active-game") 1)]
+      (changeCurrentPlayer (changeGameState new-game-4 "active-game") lastplayer)]
     ; cast vote for 2 or 4 player game
     [(symbol=? msgS2W 'wait-or-play)
      (changeGameState new-game-4 'wait-or-play)]
