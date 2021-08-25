@@ -57,7 +57,7 @@
 
 ;; msgS2W ist eines der folgenden Symbole
 ;; 'wait-for-players, 'play, 'wait, 'won, 'lost, 'start2play, 'start2wait,
-;; 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted
+;; 'start4play, 'start4wait, 'wait-or-play, 'rejected, 'voted, 'disconnect
 ;; interpretation gibt der World vor, wie sie das Spiel rendern soll
 
 ;; MailW2S ist eine Liste der Form
@@ -170,9 +170,25 @@
     [else (make-bundle univ '() '())]))
 
 ;; -----------------------------------------------------------------------------
+;; REAKTION AUF DISCONNECT
+
+
+;; Universe iWorld -> Universe
+;; interpretation Sobald wrld das Spiel verlässt geht der Server in
+;; einen Default-Zustand und informiert die anderen Spieler, dass das
+;; Spiel abgebrochen ist
+
+;; DISCONNECT-HANDLER
+;; Schicke Dummy-Nachricht an die verbleibenden Spieler, um sie über das Spielende zu informieren
+(define (handle-disconnect univ wrld)
+  (make-bundle univ
+               (map (curryr make-mail (list 'disconnect (get_ID_from_iWorld wrld univ) (list 'wall 4 4 'horizontal))) (get_iWorlds univ))
+               (list wrld)))
+
+;; -----------------------------------------------------------------------------
 ;; START DES UNIVERSUMS
 
 (universe UNIVERSE0
           (on-new add-world)
           (on-msg handle-messages)
-          (port 1044))
+          (on-disconnect handle-disconnect))
