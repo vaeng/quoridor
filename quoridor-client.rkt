@@ -188,7 +188,13 @@
                  (make-wall (make-cell 7 7) "vertical"))
            1 "active-game" null))
 
+(define host-adress
+  (first (string-split (with-input-from-file "host-adress.txt"
+    (lambda () (read-string 150))))))
 
+(define custom-port
+ (string->number(second (string-split (with-input-from-file "host-adress.txt"
+    (lambda () (read-string 150)))))))
 
 ;ausgabe spielfeld im fenster
 (define (create-world worldname)
@@ -197,17 +203,21 @@
     [on-mouse mouse-action]
     [on-tick update-frame]
     [on-key key-press]
-    [register LOCALHOST]
+    [register host-adress]
+    [port custom-port]
     [state #f]
     [on-receive receive]
-    [name worldname])
+    ;[name worldname]
+    )
   )
 
 ; (main new-game-4)
 ;;Macht zwei Welten auf
+
+
 (launch-many-worlds 
   (create-world "Player 1")
-  (create-world "Player 2")
-  ;(create-world "Player 3")
-  ;(create-world "Player 4")
+ ; (create-world "Player 2")
+ ; (create-world "Player 3")
+ ; (create-world "Player 4")
   )
