@@ -52,25 +52,29 @@
 ; (list 'play 1 (list 'wall 1 3 "horizontal"))
 
 (define (receive ws message)
-  (let ([activePlayer (second message)]
+  (let* ([lastplayer (second message)]
         [msgS2W (first message)]
+        [max-players (length (ws-players ws))]
+        [nextplayer (if (= lastplayer max-players)
+                        1
+                        (add1 lastplayer))]
         )
   (cond
     ; neither 2 or 4 players on server
     [(symbol=? msgS2W 'wait-for-players)
-     (changeCurrentPlayer (changeGameState ws 'wait-for-players) activePlayer)]
+     (changeGameState ws 'wait-for-players)]
     ;start a new 2 player game in waiting state
     [(symbol=? msgS2W 'start2wait)
-      (changeCurrentPlayer (changeGameState new-game-2 "passive-game") activePlayer)]
+      (changeCurrentPlayer (changeGameState new-game-2 "passive-game") 1)]
     ;start a new 2 player game in playing state
     [(symbol=? msgS2W 'start2play)
-      (changeCurrentPlayer (changeGameState new-game-2 "active-game" )activePlayer)]
+      (changeCurrentPlayer (changeGameState new-game-2 "active-game" )1)]
     ;start a new 4 player game in waiting state
     [(symbol=? msgS2W 'start4wait)
-      (changeCurrentPlayer (changeGameState new-game-4 "passive-game") activePlayer)]
+      (changeCurrentPlayer (changeGameState new-game-4 "passive-game") 1)]
     ;start a new 4 player game in playing state
     [(symbol=? msgS2W 'start4play)
-      (changeCurrentPlayer (changeGameState new-game-4 "active-game") activePlayer)]
+      (changeCurrentPlayer (changeGameState new-game-4 "active-game") 1)]
     ; cast vote for 2 or 4 player game
     [(symbol=? msgS2W 'wait-or-play)
      (changeGameState new-game-4 'wait-or-play)]
@@ -91,19 +95,19 @@
                            [(symbol=? movedObject 'wall)
                             (addWall ws (make-cell x y)
                                      (symbol->string (cadddr lastMove))
-                                     activePlayer)]
+                                     lastplayer)]
                            [(symbol=? movedObject 'player)
                            (movePlayer ws
                                        (make-cell x y)
-                                       activePlayer)]
+                                       lastplayer)]
                            [else ws])])
             (cond
               ; player can make a move
               [(symbol=? msgS2W 'play)
-                (changeCurrentPlayer (changeGameState nextws "active-game") activePlayer)]
+                (changeCurrentPlayer (changeGameState nextws "active-game") nextplayer)]
               ; player has to wait, other player made a move
               [(symbol=? msgS2W 'wait)
-                (changeCurrentPlayer (changeGameState nextws "passive-game") activePlayer)]
+                (changeCurrentPlayer (changeGameState nextws "passive-game") nextplayer)]
               ; player has won
               [(symbol=? msgS2W 'won) nextws]
               ; other player has won

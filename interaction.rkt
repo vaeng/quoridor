@@ -38,7 +38,7 @@
                 (cond [(equal? area "center")
                        ;(movePlayer ws clicked-cell cp)
                        (if (cellInList?
-                            (possibleCells players id ws)
+                            (possibleCells players cp ws)
                             clicked-cell )
                            (make-package ws
                                          (list 'move
@@ -49,20 +49,41 @@
                        ]
                       [(equal? area "h-edge")
                        ;(addWall ws clicked-cell "horizontal" cp)
-                       (make-package ws
-                                     (list 'move
-                                           'wall
-                                           (cell-x clicked-cell)
-                                           (cell-y clicked-cell)
-                                           'horizontal))]
+                       (cond
+                         [(or
+                           (= 0 (cell-y clicked-cell))
+                           (= BOARD_SIZE (cell-y clicked-cell)))
+                          ws]
+                         [(wallOK? (ws-walls ws)
+                                   players
+                                   clicked-cell
+                                   "horizontal"
+                                   id)
+                          (make-package ws
+                                        (list 'move
+                                              'wall
+                                              (cell-x clicked-cell)
+                                              (cell-y clicked-cell)
+                                              'horizontal))]
+                         [else ws])]
                       [(equal? area "v-edge")
                        ;(addWall ws clicked-cell "vertical" cp)
-                       (make-package ws
-                                     (list 'move
-                                           'wall
-                                           (cell-x clicked-cell)
-                                           (cell-y clicked-cell)
-                                           'vertical))]
+                       (cond
+                         [(or
+                           (= 0 (cell-x clicked-cell))
+                           (= BOARD_SIZE (cell-x clicked-cell))) ws]
+                         [(wallOK? (ws-walls ws)
+                                   players
+                                   clicked-cell
+                                   "vertical"
+                                   id)
+                          (make-package ws
+                                        (list 'move
+                                              'wall
+                                              (cell-x clicked-cell)
+                                              (cell-y clicked-cell)
+                                              'vertical))]
+                      [else ws])]
                       [else ws])]
                [(mouse=? me "move")
                 (cond [(equal? area "center")                       
@@ -118,7 +139,9 @@
                                                         0 0))]
                       [else ws])]
                [else ws]
+               ; neither move nor button down
                )]
+        ; not an active game:
         [else ws]
         )
     ))
