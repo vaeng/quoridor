@@ -357,6 +357,13 @@
    0))
 
 ;; WorldState -> Image
+;; this is the rendering function for the disconnect screen
+(define (render-discon ws)
+  (generate-msg-screen
+   "Another Player was disconnected\nfrom the server."
+   0))
+
+;; WorldState -> Image
 ;; layers all render functions for the final game-board
 (define (render-state ws)
   (cond
@@ -369,6 +376,7 @@
     [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)]
     [(equal? (ws-gamestate ws) 'won) (render-won ws)]
     [(equal? (ws-gamestate ws) 'lost) (render-lost ws)]
+    [(equal? (ws-gamestate ws) 'disconnect) (render-discon ws)]
     ))
 
 ;; WorldState -> WorldState

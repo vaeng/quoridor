@@ -66,6 +66,9 @@
     ;start a new 2 player game in waiting state
     [(symbol=? msgS2W 'start2wait)
       (changeCurrentPlayer (changeGameState new-game-2 "passive-game") 1)]
+    ;start a new 2 player game in waiting state
+    [(symbol=? msgS2W 'disconnected)
+      (changeCurrentPlayer (changeGameState new-game-2 'disconnect) 1)]
     ;start a new 2 player game in playing state
     [(symbol=? msgS2W 'start2play)
       (changeCurrentPlayer (changeGameState new-game-2 "active-game" )1)]
@@ -217,7 +220,7 @@
 
 (launch-many-worlds 
   (create-world "Player 1")
- ; (create-world "Player 2")
+  (create-world "Player 2")
  ; (create-world "Player 3")
  ; (create-world "Player 4")
   )
