@@ -235,7 +235,20 @@
 
 ; cell direction -> cell
 ; returns the cell in the direction of the origin cell
-; direction is one of S, N, W, E for south, north, etch
+; direction is one of S, N, W, E for south, north, etc
+; special cases for NE, SW, NN (two north),
+; SS, WW, EE
+;+-----+-----+------+-----+-----+
+;| -   | NNW | NN   | NNE | -   |
+;+-----+-----+------+-----+-----+
+;| WWN | NW  | N    | NE  | EEN |
+;+-----+-----+------+-----+-----+
+;| WW  | W   | Cell | E   | EE  |
+;+-----+-----+------+-----+-----+
+;| WWS | SW  | S    | SE  | EES |
+;+-----+-----+------+-----+-----+
+;| -   | SSW | SS   | SSE | -   |
+;+-----+-----+------+-----+-----+
 (define (neighbour cell direction)
   (let ([x (cell-x cell)]
         [y (cell-y cell)])
@@ -246,6 +259,10 @@
     [(string=? direction "W") (make-cell (sub1 x) y)]
     [(string=? direction "NE") (make-cell (add1 x) (sub1 y))]
     [(string=? direction "SW") (make-cell (sub1 x) (add1 y))]
+    [(string=? direction "NN") (make-cell x (- y 2))]
+    [(string=? direction "WW") (make-cell (- x 2) y)]
+    [(string=? direction "SS") (make-cell x (+ y 2))]
+    [(string=? direction "EE") (make-cell (+ x 2 ) y)]
     )))
 
 ; walls players id -> bool
