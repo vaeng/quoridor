@@ -52,7 +52,7 @@
 ;; (make-mail univ 'move 'wall 3 4 'horizontal)
 
 ;; msgW2S ist eines der folgenden Symbole
-;; 'play, 'wait, 'move
+;; 'play, 'wait, 'move, 'reset
 ;; interpretation die ersten beiden Symbole sind relevant für die Abstimmung zum Zwei-oder Vier-Spieler-Spiel
 ;; 'move kündigt eine Aktion an
 
@@ -421,32 +421,32 @@
 
 ;; Legitime Bewegung im Doppel
 (check-expect
- (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2)) iworld2 (list 'move 'wall 5 6))
- (make-bundle (list (list (cons iworld1 1) (cons iworld2 2)) '2players (list 2 'wall 5 6))
-              (list (make-mail iworld2 (list 'wait 1 (list 2 'wall 5 6)))
-                    (make-mail iworld1 (list 'play 1 (list 2 'wall 5 6))))
+ (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'vertikal)) iworld2 (list 'move 'wall 5 6 'horizontal))
+ (make-bundle (list (list (cons iworld1 1) (cons iworld2 2)) '2players (list 2 'wall 5 6 'horizontal))
+              (list (make-mail iworld2 (list 'wait 1 (list 2 'wall 5 6 'horizontal)))
+                    (make-mail iworld1 (list 'play 1 (list 2 'wall 5 6 'horizontal))))
               '()))
 
 
 ;; Legitime Bewegung im Vier-Spieler-Spiel
 (check-expect
- (handle-messages (list (list (cons iworld2 2) (cons iworld3 3) (cons iworld4 4) (cons iworld1 1)) '4players (list 1 'player 4 2)) iworld2 (list 'move 'wall 5 6))
- (make-bundle (list (list (cons iworld3 3) (cons iworld4 4) (cons iworld1 1) (cons iworld2 2)) '4players (list 2 'wall 5 6))
-              (append (map (curryr make-mail (list 'wait 3 (list 2 'wall 5 6))) (list iworld1 iworld2 iworld4))
-                      (list (make-mail  iworld3 (list 'play 3 (list 2 'wall 5 6)))))
+ (handle-messages (list (list (cons iworld2 2) (cons iworld3 3) (cons iworld4 4) (cons iworld1 1)) '4players (list 1 'player 4 2 'horizontal)) iworld2 (list 'move 'wall 5 6 'horizontal))
+ (make-bundle (list (list (cons iworld3 3) (cons iworld4 4) (cons iworld1 1) (cons iworld2 2)) '4players (list 2 'wall 5 6 'horizontal))
+              (append (map (curryr make-mail (list 'wait 3 (list 2 'wall 5 6 'horizontal))) (list iworld1 iworld2 iworld4))
+                      (list (make-mail  iworld3 (list 'play 3 (list 2 'wall 5 6 'horizontal)))))
               '()))
 
 ;; World, die nicht am Zug ist, möchte eine Bewegung machen
 (check-expect
- (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2)) iworld1 (list 'move 'wall 5 6))
- (make-bundle (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2))
+ (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'horizontal)) iworld1 (list 'move 'wall 5 6 'horizontal))
+ (make-bundle (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'horizontal))
               '()
               '()))
 
 ;; World möchte abstimmen
 (check-expect
- (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2)) iworld2 (list 'wait 'wall 5 6))
- (make-bundle (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2))
+ (handle-messages (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'horizontal)) iworld2 (list 'wait 'wall 5 6 'horizontal))
+ (make-bundle (list (list (cons iworld2 2) (cons iworld1 1)) '2players (list 1 'player 4 2 'horizontal))
               '()
               '()))
 
@@ -485,6 +485,10 @@
     ;;Nachricht zur Anfrage eines Spielzuges
     [(equal? (get_Msg_Mail m) 'move)
      (handle-messages-move univ wrld m)]
+    
+    ;; Nachricht zur Anfrage eines neuen Spiels
+    [(equal? (get_Msg_Mail m) 'reset)
+     (handle-messages-reset univ wrld m)]
 
     [else (make-bundle univ '() '())]))
 
@@ -539,6 +543,8 @@
 ;; Universe World Mail -> Bundle
 ;; Hilfsfunktion um Spielanfragen zu bearbeiten
 (define (handle-messages-move univ wrld m)
+  ;; ist der Spieler an der Reihe?
+  (if (equal? (get_Active_iWorld univ) wrld)
 
   ;;prüfe ob Universe im richtigen Zustand ist
   (cond
@@ -550,10 +556,20 @@
          (make-bundle (list (get_Worlds univ) 'finished (make_Move wrld m))
                       (make-mail wrld (list 'won 0 )))
          ;; es gibt noch keinen Sieger
-         '())
+         (make-bundle))
      (make-bundle (append (get_Inactive_Worlds)))]
     ;; Leite Zug an alle im Zwei-Spieler-Spiel weiter und ändere den aktiven Spieler
-    [(equal? (get_State univ ' 2players))]))
+    [(equal? (get_State univ ' 2players))]
+
+    ;; Spiel ist nicht im Spielmodus, Zug wird ignoriert
+    [else (make-bundle univ '() '())])
+  ;; Spieler ist nicht dran, Zug wird ignoriert
+  (make-bundle univ '() '())))
+
+;; Universe World Mail -> Bundle
+;; Hilfsfunktion um nach beendetem Spiel ein neues Spiel zu starten
+(define (handle-messages-reset univ wrld m)
+  (make-bundle))
 
 ;; LastMove -> Boolean
 ;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat
