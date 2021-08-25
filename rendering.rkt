@@ -320,7 +320,7 @@
 ;; this is the rendering function for the waiting room
 (define (render-wait-for-players ws)
   (generate-msg-screen
-     "Waiting for other players..."
+     "Waiting for other players."
      (special-frame (ws-special ws))))
 
 ;; WorldState -> Image
@@ -343,6 +343,20 @@
    0))
 
 ;; WorldState -> Image
+;; this is the rendering function for the won screen
+(define (render-won ws)
+  (generate-msg-screen
+   "Winner, winner, Condor dinner!\nPress 'r' for reset."
+   0))
+
+;; WorldState -> Image
+;; this is the rendering function for the won screen
+(define (render-lost ws)
+  (generate-msg-screen
+   "You lost. Butter luck next time.\nPress 'r' for reset."
+   0))
+
+;; WorldState -> Image
 ;; layers all render functions for the final game-board
 (define (render-state ws)
   (cond
@@ -352,7 +366,9 @@
     [(equal? (ws-gamestate ws) 'rejected) (render-rejected ws)]
     [(equal? (ws-gamestate ws) 'voted) (render-voted ws)]
     [(equal? (ws-gamestate ws) 'wait-or-play) (render-voting ws)]
-    [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)] 
+    [(equal? (ws-gamestate ws) 'wait-for-players) (render-wait-for-players ws)]
+    [(equal? (ws-gamestate ws) 'won) (render-won ws)]
+    [(equal? (ws-gamestate ws) 'lost) (render-lost ws)]
     ))
 
 ;; WorldState -> WorldState

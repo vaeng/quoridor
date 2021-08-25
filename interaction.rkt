@@ -164,5 +164,9 @@
          (make-package ws (list 'wait))]
         [(and (key=? ke "s") (equal? (ws-gamestate ws) 'wait-or-play))
          (make-package ws (list 'play))]
+        [(and (key=? ke "r") (or
+                              (equal? (ws-gamestate ws) 'won)
+                              (equal? (ws-gamestate ws) 'lost)))
+         (make-package ws (list 'reset))]
        
         [else ws]))

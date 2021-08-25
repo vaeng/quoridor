@@ -109,9 +109,9 @@
               [(symbol=? msgS2W 'wait)
                 (changeCurrentPlayer (changeGameState nextws "passive-game") nextplayer)]
               ; player has won
-              [(symbol=? msgS2W 'won) nextws]
+              [(symbol=? msgS2W 'won) (changeGameState nextws 'won)]
               ; other player has won
-              [(symbol=? msgS2W 'lost) nextws]
+              [(symbol=? msgS2W 'lost) (changeGameState nextws 'lost)]
               [else ws]))]
   )))
 
