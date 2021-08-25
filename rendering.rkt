@@ -76,26 +76,34 @@
             unscaled
    )))
 
+(define PLAYER1_COLOR "red")
+(define PLAYER2_COLOR "blue")
+(define PLAYER3_COLOR "green")
+(define PLAYER4_COLOR "purple")
+
 (define PLAYER1
-  (rotate 180(playertoken_prefab "red")))
+  (rotate 180(playertoken_prefab PLAYER1_COLOR)))
 
 (define PLAYER2
-  (playertoken_prefab "blue"))
+  (playertoken_prefab PLAYER2_COLOR))
 
 (define PLAYER3
-  (rotate -90 (playertoken_prefab "green")))
+  (rotate -90 (playertoken_prefab PLAYER3_COLOR)))
 
 (define PLAYER4
-  (rotate 90 (playertoken_prefab "purple")))
+  (rotate 90 (playertoken_prefab PLAYER4_COLOR)))
 
-(define WALL_VERT
+(define (WALL_PREFAB color)
   (scene+line
    (rectangle  WALL_THICKNESS (* 2 TILE_SIZE)  "solid" (make-color 255 0 0 0))
    (/ WALL_THICKNESS 2)
    10
    (/ WALL_THICKNESS 2)
    (- (* 2 TILE_SIZE) 10)
-   (make-pen "white" 11 "solid" "round" "round")))
+   (make-pen color 11 "solid" "round" "round")))
+
+(define WALL_VERT
+  (WALL_PREFAB "white"))
 
 (define WALL_HORZ
   (rotate 90 WALL_VERT))
@@ -179,17 +187,17 @@
 ;; Player Image -> Image
 ;; Renders a wall with correct position and orientation
 ;; on an image
-(define (render-wall wall image)
+(define (render-wall wall vwall hwall image)
   (let ([x (first (cell->NWCorner (wall-cell wall)))]
         [y (second (cell->NWCorner (wall-cell wall)))])
    (cond
-     [(equal? (wall-orientation wall) "vertical") (overlay/xy WALL_VERT
-                                                              (+ x (/ (image-width WALL_VERT) 2))
+     [(equal? (wall-orientation wall) "vertical") (overlay/xy vwall
+                                                              (+ x (/ (image-width vwall) 2))
                                                               y
                                                               image)]
-     [(equal? (wall-orientation wall) "horizontal") (overlay/xy WALL_HORZ
+     [(equal? (wall-orientation wall) "horizontal") (overlay/xy hwall
                                                                 x
-                                                                (+ y (/ (image-height WALL_HORZ) 2))
+                                                                (+ y (/ (image-height hwall) 2))
                                                                 image)]
      [(not (member (wall-orientation wall) '("vertical" "horizontal")))
       (raise (string-append "faulty wall orientation: " (wall-orientation wall)) #t)]
@@ -199,7 +207,14 @@
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
 (define (render-walls walls image)
-  ((apply compose (map (lambda (x) (curry render-wall x)) walls)) image))
+  ((apply compose (map (lambda (x) (curry render-wall x WALL_VERT WALL_HORZ)) walls)) image))
+
+;; Image -> Image
+;; lays renders colored boarders around the frame
+(define (render-boarder image)
+  ;(scene+
+  image
+  )
 
 
 ;; Player Image -> Image
@@ -289,6 +304,7 @@
          [playercell (player_pos players (ws-current-player ws))])
   ((compose
     (curry render-special (ws-special ws))
+    render-boarder
     (curry render-walls (ws-walls ws))
     (curry render-players players)
     (curry render-perforations moves playercell)
