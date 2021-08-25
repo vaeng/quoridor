@@ -54,11 +54,13 @@
                            (= 0 (cell-y clicked-cell))
                            (= BOARD_SIZE (cell-y clicked-cell)))
                           ws]
-                         [(wallOK? (ws-walls ws)
+                         [(and(wallOK? (ws-walls ws)
                                    players
                                    clicked-cell
                                    "horizontal"
                                    id)
+                              (validConfig? (addUnsafeWall ws clicked-cell "horizontal" cp))
+                              )
                           (make-package ws
                                         (list 'move
                                               'wall
@@ -72,11 +74,13 @@
                          [(or
                            (= 0 (cell-x clicked-cell))
                            (= BOARD_SIZE (cell-x clicked-cell))) ws]
-                         [(wallOK? (ws-walls ws)
+                         [(and (wallOK? (ws-walls ws)
                                    players
                                    clicked-cell
                                    "vertical"
                                    id)
+                               (validConfig? (addUnsafeWall ws clicked-cell "vertical" cp))
+                              )
                           (make-package ws
                                         (list 'move
                                               'wall
@@ -109,11 +113,13 @@
                                                         (= 0 (cell-y clicked-cell))
                                                         (= BOARD_SIZE (cell-y clicked-cell)))
                                                            empty-image]
-                                                      [(wallOK? (ws-walls ws)
+                                                      [(and (wallOK? (ws-walls ws)
                                                                  players
                                                                  clicked-cell
                                                                  "horizontal"
                                                                  id)
+                                                            (validConfig?
+                                                             (addUnsafeWall ws clicked-cell "horizontal" cp)))
                                                            WALL_HORZ]
                                                        [else WALL_HORZ_DENIED])
                                                         0 0))]
@@ -128,11 +134,12 @@
                                                       [(or
                                                         (= 0 (cell-x clicked-cell))
                                                         (= BOARD_SIZE (cell-x clicked-cell))) empty-image]
-                                                      [(wallOK? (ws-walls ws)
+                                                      [(and(wallOK? (ws-walls ws)
                                                                  players
                                                                  clicked-cell
                                                                  "vertical"
                                                                  id)
+                                                       (validConfig? (addUnsafeWall ws clicked-cell "vertical" cp)))
                                                            WALL_VERT]
                                                        [else WALL_VERT_DENIED])
 

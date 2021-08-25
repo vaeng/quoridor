@@ -15,6 +15,8 @@
                       clicked-area
                       player_pos
                       neighbour
+                      addUnsafeWall
+                      validConfig?
                       ))
 
 
@@ -315,6 +317,17 @@
     )
   )
   ))
+
+; WorldState cell orientation id -> WorldState
+; Add a unchecked wall from player with id on the board at the north-west corner of cell
+; with the given orientation used for validityCheck, not for game moves!
+(define (addUnsafeWall ws cell orientation id)
+  (make-ws
+       (substractWall (ws-players ws) id) ; update player's remaining walls
+       (cons (make-wall cell orientation) (ws-walls ws)) ; add wall to worldstate
+       (ws-current-player ws) ;keep-current-player
+       (ws-gamestate ws) ; keep-gamestate
+       (ws-special ws)))
 
 
 ; WorldState cell orientation id -> WorldState
