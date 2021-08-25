@@ -388,6 +388,8 @@
          [newspecial (make-special  x y img newframe lastframe)])
         (changeSpecial ws newspecial))))
 
+;; number -> image
+;; shows the moving logo according to the current frame
 (define (moving-logo frame)
   (let* (
          [font-size 75]
@@ -414,7 +416,10 @@
         [oo-gap (* 0.5 (- (image-height rr-part) (* 2 (image-height o-part))))]
         [top-y (* 0.5 (+ oo-gap (image-height o-part))) ]
         [bottom-y (- top-y)]
-        [y1 (- top-y (modulo frame (* 2 top-y)))]
+        [capped-frame (modulo frame (* 4 top-y))]
+        [y1 (if (< capped-frame (* 2 top-y))
+                (- top-y capped-frame)
+                (+ (* -3 top-y) capped-frame))]
         [y2 (- y1)]
         [oo-part
          (overlay/align/offset "center" "center" scaled-player2 0 y2 
@@ -424,12 +429,16 @@
                                        o-part)))]
         )
     (beside quid-part oo-part rr-part)))
-
+;; number -> image
+;; gives the centered logo on the game screen with animation
 (define (centered-logo frame)
   (overlay/align "center" "center"
                  (moving-logo frame)
                  (square (image-height (render-empty-board)) "solid" BACKGROUND_COLOR)))
 
+;; string number -> image
+;; generates the message screen with the given message, if frame is
+;; 0 then image will be static
 (define (generate-msg-screen msg frame)
   (let ([gap (* 0.25 TILE_SIZE)])
   (overlay/xy (text/font msg 20 "white" "Gill Sans" 'modern 'normal 'light #f)
@@ -439,52 +448,6 @@
                     (* 0.5 (image-height (moving-logo 0)))
                     gap))          
               (centered-logo frame))))
-
-(define logo
-  (let* ([font-size 75]
-         [o-size (* 0.8 font-size)]
-         [letter-gen (lambda (letter)
-                      (text/font letter font-size "white"
-                      "Gill Sans" 'swiss 'normal 'bold #f))]
-         [quid-part
-          (above (apply beside
-                       (map (lambda (letter)
-                              (overlay/align "center" "center" (letter-gen letter) TILE))
-                            (list "Q" "U" )))
-                (apply beside
-                       (map (lambda (letter)
-                              (overlay/align "center" "center" (letter-gen letter) TILE))
-                            (list "I" "D"))))]
-        [rr-part
-         (above 
-          (overlay/align "center" "center" (letter-gen "R") TILE)
-          (overlay/align "center" "center" (letter-gen "R") TILE))]
-        [o-part (lambda (token) (overlay/align "center" "center"
-                               (scale (/ o-size (image-height PLAYER1)) token) TILE))]
-        [oo-gap (* 0.5 (- (image-height rr-part) (* 2 (image-height (o-part PLAYER1)))))]
-        [oo-part
-         (above 
-          (o-part PLAYER1)
-          (rectangle (image-width TILE) oo-gap "solid" (make-color 0 0 0 0))
-          (o-part PLAYER2))]
-        )
-    (beside quid-part oo-part rr-part)))
-
-(define centered-logo-static
-  (overlay/align "center" "center"
-                 logo
-                 (square (image-height (render-empty-board)) "solid" BACKGROUND_COLOR)))
-
-
-(define (generate-msg-screen-old msg)
-  (let ([gap (* 0.25 TILE_SIZE)])
-  (overlay/xy (text msg 20 "white")
-              (- (- (* 0.5 (image-height (render-empty-board)))
-                    (* 0.5 (image-width logo))))
-              (- (+ (* 0.5 (image-height (render-empty-board)))
-                    (* 0.5 (image-height logo))
-                    gap))          
-              centered-logo-static)))
 
 
 ;; temporary definition for dev
