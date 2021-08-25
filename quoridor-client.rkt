@@ -58,19 +58,19 @@
   (cond
     ; neither 2 or 4 players on server
     [(symbol=? msgS2W 'wait-for-players)
-     (changeGameState ws 'wait-for-players)]
+     (changeCurrentPlayer (changeGameState ws 'wait-for-players) activePlayer)]
     ;start a new 2 player game in waiting state
     [(symbol=? msgS2W 'start2wait)
-     (changeGameState new-game-2 "passive-game")]
+      (changeCurrentPlayer (changeGameState new-game-2 "passive-game") activePlayer)]
     ;start a new 2 player game in playing state
     [(symbol=? msgS2W 'start2play)
-     (changeGameState new-game-2 "active-game")]
+      (changeCurrentPlayer (changeGameState new-game-2 "active-game" )activePlayer)]
     ;start a new 4 player game in waiting state
     [(symbol=? msgS2W 'start4wait)
-     (changeGameState new-game-4 "passive-game")]
+      (changeCurrentPlayer (changeGameState new-game-4 "passive-game") activePlayer)]
     ;start a new 4 player game in playing state
     [(symbol=? msgS2W 'start4play)
-     (changeGameState new-game-4 "active-game")]
+      (changeCurrentPlayer (changeGameState new-game-4 "active-game") activePlayer)]
     ; cast vote for 2 or 4 player game
     [(symbol=? msgS2W 'wait-or-play)
      (changeGameState new-game-4 'wait-or-play)]
@@ -100,10 +100,10 @@
             (cond
               ; player can make a move
               [(symbol=? msgS2W 'play)
-               (changeGameState nextws "active-game")]
+                (changeCurrentPlayer (changeGameState nextws "active-game") activePlayer)]
               ; player has to wait, other player made a move
               [(symbol=? msgS2W 'wait)
-               (changeGameState nextws "passive-game")]
+                (changeCurrentPlayer (changeGameState nextws "passive-game") activePlayer)]
               ; player has won
               [(symbol=? msgS2W 'won) nextws]
               ; other player has won
@@ -204,6 +204,6 @@
 (launch-many-worlds 
   (create-world "Player 1")
   (create-world "Player 2")
-  (create-world "Player 3")
-  (create-world "Player 4")
+  ;(create-world "Player 3")
+  ;(create-world "Player 4")
   )

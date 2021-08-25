@@ -72,7 +72,7 @@
                                                     (if (cellInList?
                                                          (possibleCells players id ws)
                                                          clicked-cell )
-                                                        MOVE_OK
+                                                        empty-image ;MOVE_OK
                                                         empty-image)
                                                         0 0))]
                       [(equal? area "h-edge")
