@@ -588,7 +588,9 @@
                  
                  ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
                  (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
-                              (make-mail wrld (list 'won 0 )))
+                          (append (curryr make-mail (composeMail univ m wrld 'lost) (get_Inactive_iWorlds univ)) 
+                          (list (make-mail wrld (composeMail univ m wrld 'won))))
+                          '())
                  
                  ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
                  (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
@@ -608,7 +610,9 @@
                  
              ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
              (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
-                          (make-mail wrld (list 'won 0 )))
+                          (list (make-mail wrld (composeMail univ m wrld 'won))
+                          (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'lost)))
+                          '())
                  
              ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
              (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
@@ -660,7 +664,7 @@
         [firstcolumn 0])
     (cond  
       ; type muss eine Spielerbewegung sein:
-      [(= movetype 'player)
+      [(equal? movetype 'player)
        (cond
          ; Player 1 muss in letzte Zeile rücken
          [(and (= id 1) (= y lastrow)) #t]
@@ -690,6 +694,3 @@
 ; (universe UNIVERSE0
 ;           (on-new add-world)
 ;           (on-msg handle-messages))
-
-
-(composeMail UNIVERSE1 (list 'move 'wall 3 4 'horizontal) iworld1 'wait)
