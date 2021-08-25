@@ -259,6 +259,8 @@
     [(string=? direction "W") (make-cell (sub1 x) y)]
     [(string=? direction "NE") (make-cell (add1 x) (sub1 y))]
     [(string=? direction "SW") (make-cell (sub1 x) (add1 y))]
+    [(string=? direction "NW") (make-cell (add1 x) (add1 y))]
+    [(string=? direction "SE") (make-cell (sub1 x) (sub1 y))]
     [(string=? direction "NN") (make-cell x (- y 2))]
     [(string=? direction "WW") (make-cell (- x 2) y)]
     [(string=? direction "SS") (make-cell x (+ y 2))]

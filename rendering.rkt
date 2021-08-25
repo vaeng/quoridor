@@ -251,50 +251,28 @@
       [bridge-size (* 0.5 TILE_SIZE)]
       [gap-size (/ bridge-size 2)]
       [place-bridge (lambda (x y img)
-                      (overlay/xy (square bridge-size "solid" POS_MOVE_COL) x y img))]) 
-  #|(apply compose
-    (list
-     (if #t
-      ;(cellInList?  moves (neighbour sourcecell "S"))
-         ;(and (print (string-append "SOK x:" (number->string x) " y: " (number->string y)))
-                     (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y)
-                     ;)
-                     (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") 0 0))
-     (if (cellInList?  moves (neighbour sourcecell "W"))
-         (and (print "WOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
-         (curry overlay/xy empty-image 0 0))
-     (if (cellInList?  moves (neighbour sourcecell "N"))
-         (and (print "NOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
-         (curry overlay/xy empty-image 0 0))
-     (if (cellInList?  moves (neighbour sourcecell "E"))
-         (and (print "EOK") (curry overlay/xy (square (* 0.5 TILE_SIZE) "solid" "red") x y))
-         (curry overlay/xy empty-image 0 0))
-     ))
-    image))|#
+                      (overlay/xy (square bridge-size "solid" POS_MOVE_COL) x y img))]
+      [curried-bridge (lambda (direction cellx celly)
+                        (if (cellInList?  moves (neighbour sourcecell direction))
+                            (curry place-bridge cellx celly)
+                            (curry identity)))]) 
   ;; West bridge
-  ((if (cellInList?  moves (neighbour sourcecell "W"))
-                     (curry place-bridge (+ x gap-size) (- y gap-size))
-                     (curry identity))
-                ;; East bridge
-                ((if (cellInList?  moves (neighbour sourcecell "E"))
-                     (curry place-bridge (- x (/ TILE_SIZE 2) gap-size) (- y gap-size))
-                     (curry identity))
-                              ;; South bridge
-                              ((if (cellInList?  moves (neighbour sourcecell "S"))
-                                   (curry place-bridge (- x gap-size) (- y (+ bridge-size  gap-size)))
-                                   (curry identity))
-                                            ;; North bridge
-                                            ((if (cellInList?  moves (neighbour sourcecell "N"))
-                                                 (curry place-bridge (- x gap-size) (+ y gap-size))
-                                                 (curry identity))
-                                             image
-                                             )
-                                            )
-                              )
-                )
-
-  ))
-
+  ((curried-bridge "W"
+                  (+ x gap-size)
+                  (- y gap-size))
+                  ;; East bridge
+                  ((curried-bridge "E"
+                                  (- x (/ TILE_SIZE 2) gap-size)
+                                  (- y gap-size))
+                                  ;; South bridge
+                                  ((curried-bridge "S"
+                                                  (- x gap-size)
+                                                  (- y (+ bridge-size  gap-size)))
+                                                  ;; North bridge
+                                                  ((curried-bridge "N"
+                                                                  (- x gap-size)
+                                                                  (+ y gap-size))
+                                                                  image))))))
 
 ;; WallsList, Image -> Image
 ;; lays all walls found in the walls list onto another image
@@ -327,7 +305,7 @@
     (curry render-special (ws-special ws))
     (curry render-walls (ws-walls ws))
     (curry render-players (ws-players ws))
-    (curry render-passive-players (ws-players))
+    (curry render-passive-players (ws-players ws))
     (curry render-finish (ws-current-player ws))
     )
    (render-empty-board)))
@@ -408,3 +386,41 @@
                        (add1 currentframe))]
          [newspecial (make-special  x y img newframe lastframe)])
         (changeSpecial ws newspecial))))
+
+;; temporary definition for dev
+(define new-game-2
+  (make-ws (list
+            (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 10)
+            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 10))
+           '() 1 "active-game" null))
+
+(define logo
+  (let* ([font-size 75]
+         [o-size (* 0.8 font-size)]
+         [letter-gen (lambda (letter)
+                      (text/font letter font-size "white"
+                      "Gill Sans" 'swiss 'normal 'bold #f))]
+         [quid-part
+          (above (apply beside
+                       (map (lambda (letter)
+                              (overlay/align "center" "center" (letter-gen letter) TILE))
+                            (list "Q" "U" )))
+                (apply beside
+                       (map (lambda (letter)
+                              (overlay/align "center" "center" (letter-gen letter) TILE))
+                            (list "I" "D"))))]
+        [rr-part
+         (above 
+          (overlay/align "center" "center" (letter-gen "R") TILE)
+          (overlay/align "center" "center" (letter-gen "R") TILE))]
+        [o-part (lambda (token) (overlay/align "center" "center"
+                               (scale (/ o-size (image-height PLAYER1)) token) TILE))]
+        [oo-gap (* 0.5 (- (image-height rr-part) (* 2 (image-height (o-part PLAYER1)))))]
+        [oo-part
+         (above 
+          (o-part PLAYER1)
+          (rectangle (image-width TILE) oo-gap "solid" (make-color 0 0 0 0))
+          (o-part PLAYER2))]
+        )
+    (beside quid-part oo-part rr-part)))
+    

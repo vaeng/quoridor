@@ -185,10 +185,10 @@
            1 "active-game" null))
 
 
-#|
+
 ;ausgabe spielfeld im fenster
 (define (create-world worldname)
-  (big-bang test-ws
+  (big-bang new-game-2
     [to-draw render-state]
     [on-mouse mouse-action]
     [on-tick update-frame]
@@ -199,7 +199,7 @@
     [name worldname])
   )
 
-
+#|
 ; (main new-game-4)
 ;;Macht zwei Welten auf
 (launch-many-worlds 
