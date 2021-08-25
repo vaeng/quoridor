@@ -584,14 +584,14 @@
          (if (= (length (get_Worlds univ)) 4)
              
              ;; prüfe, ob der übermittelte Zug den Sieg bringt
-             (if (winningMove? (make_Move wrld m))
+             (if (winningMove? (make_Move univ wrld m))
                  
                  ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
-                 (make-bundle (list (get_Worlds univ) 'finished (make_Move wrld m))
+                 (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
                               (make-mail wrld (list 'won 0 )))
                  
                  ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
-                 (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move wrld m))
+                 (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
                               (append (curryr make-mail (composeMail univ m wrld 'wait) (append (list (get_Active_iWorld univ)) (get_Inactive_iWorlds_3_4 univ)))
                                       (list (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'play))))
                               '()))
@@ -604,14 +604,14 @@
         [(equal? (get_State univ) '2players)
 
          ;; prüfe, ob der übermittlete Zug den Sieg bringt
-         (if (winningMove? (make_Move wrld m))
+         (if (winningMove? (make_Move univ wrld m))
                  
              ;; der Sieger steht fest, gehe in Zustand 'finished und benachrichtige Gewinner und Verlierer, übermittle aber auch den gewinnbringenden Zug
-             (make-bundle (list (get_Worlds univ) 'finished (make_Move wrld m))
+             (make-bundle (list (get_Worlds univ) 'finished (make_Move univ wrld m))
                           (make-mail wrld (list 'won 0 )))
                  
              ;; es gibt noch keinen Sieger, übermittle Zug an alle und aktualisiere die Liste der Worlds, sowie letzten Zug
-             (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move wrld m))
+             (make-bundle (list (updateWorlds univ wrld) (get_State univ) (make_Move univ wrld m))
                           (list (make-mail (get_Active_iWorld univ) (composeMail univ m wrld 'wait))
                                 (make-mail (get_next_Inactive_iWorld univ) (composeMail univ m wrld 'play)))
                           '()))]
