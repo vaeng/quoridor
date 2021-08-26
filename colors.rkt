@@ -17,16 +17,20 @@
 (require 2htdp/image)
 
 (define BACKGROUND_COLOR "black")
+
+;; tile colors
 (define POS_MOVE_COL "Alice Blue")
 (define DEFAULT_TILE_COLOR "grey")
 (define FIN_TILE_COLOR "Pale Green")
 (define TILE_POS_COLOR "Light Green")
 
+;; player colors
 (define PLAYER1_COLOR "red")
 (define PLAYER2_COLOR "blue")
 (define PLAYER3_COLOR "green")
 (define PLAYER4_COLOR "purple")
 
+;; wall colors
 (define WALL_COLOR "white")
 (define WALL_DENIED_COLOR "red")
 
