@@ -200,7 +200,7 @@
     (lambda () (read-string 150)))))))
 
 ;ausgabe spielfeld im fenster
-(define (create-world worldname)
+(define (create-world)
   (big-bang new-game-2
     [to-draw render-state]
     [on-mouse mouse-action]
@@ -210,17 +210,8 @@
     [port custom-port]
     [state #f]
     [on-receive receive]
-    ;[name worldname]
+    [name "Quoridor"]
     )
   )
 
-; (main new-game-4)
-;;Macht zwei Welten auf
-
-
-(launch-many-worlds 
-  (create-world "Player 1")
-  (create-world "Player 2")
- ; (create-world "Player 3")
- ; (create-world "Player 4")
-  )
+(create-world)
