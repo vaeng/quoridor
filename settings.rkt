@@ -16,4 +16,6 @@
 (define BOARD_SIZE 9)
 
 ; size of tiles in pixels
-(define TILE_SIZE 80)
+(define TILE_SIZE 
+  (string->number (first (string-split (with-input-from-file "client-settings.txt"
+    (lambda () (read-string 150)))))))

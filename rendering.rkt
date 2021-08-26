@@ -90,7 +90,7 @@
   (makeTile FIN_TILE_COLOR))
 
 (define (playerform color)
-  (center-pinhole (circle 50 "solid" color)))
+  (center-pinhole (circle (/ (* 50 TILE_SIZE) 80) "solid" color)))
   
 
 (define (playertoken_prefab color)
@@ -265,7 +265,8 @@
                   )]
          )
     (overlay/align "center" "center"
-                   (center-pinhole (text (number->string remaining-walls) 30 TOKEN_TEXT_COLOR ))
+                   (center-pinhole (text (number->string remaining-walls)
+                                         (round (/ (* 30 TILE_SIZE)  80)) TOKEN_TEXT_COLOR ))
                    token
                    )))
 
@@ -523,7 +524,7 @@
 ;; shows the moving logo according to the current frame
 (define (moving-logo frame)
   (let* (
-         [font-size 75]
+         [font-size (round (/ (* 75 TILE_SIZE)  80))]
          [o-size (* 0.8 font-size)]
          [letter-gen (lambda (letter)
                        (text/font letter font-size "white"
@@ -572,7 +573,7 @@
 ;; 0 then image will be static
 (define (generate-msg-screen msg frame)
   (let ([gap (* 0.25 TILE_SIZE)])
-    (overlay/xy (text/font msg 20 "white" "Gill Sans" 'modern 'normal 'light #f)
+    (overlay/xy (text/font msg (round (/ (* 20 TILE_SIZE)  80)) "white" "Gill Sans" 'modern 'normal 'light #f)
                 (- (- (* 0.5 (image-height (render-empty-board)))
                       (* 0.5 (image-width (moving-logo 0)))))
                 (- (+ (* 0.5 (image-height (render-empty-board)))
