@@ -220,7 +220,7 @@
 
 (launch-many-worlds 
   (create-world "Player 1")
- ; (create-world "Player 2")
+  (create-world "Player 2")
  ; (create-world "Player 3")
  ; (create-world "Player 4")
   )
