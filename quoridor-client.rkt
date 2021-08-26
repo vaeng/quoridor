@@ -206,7 +206,7 @@
     [on-mouse mouse-action]
     [on-tick update-frame]
     [on-key key-press]
-    [register host-adress] ;host-adress]
+    [register LOCALHOST] ;host-adress]
     [port custom-port]
     [state #f]
     [on-receive receive]

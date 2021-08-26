@@ -15,6 +15,7 @@
 (require "structures.rkt")
 (require "settings.rkt")
 (require "helpers.rkt")
+(require "colors.rkt")
 
 (require 2htdp/image)
 
@@ -36,7 +37,7 @@
 (define PLAYER_SHADOW_X WALL_THICKNESS)
 (define PLAYER_SHADOW_Y WALL_THICKNESS)
 
-(define BACKGROUND_COLOR "black")
+
 
 (define (makeTile color)
   (let* ([stroke_size 20]
@@ -51,9 +52,9 @@
 
 
 (define TILE
-  (makeTile "grey"))
+  (makeTile DEFAULT_TILE_COLOR))
 
-(define POS_MOVE_COL "Alice Blue")
+
 
 (define POS_MOVE
   (makeTile POS_MOVE_COL))
@@ -62,7 +63,7 @@
   (makeTile BACKGROUND_COLOR))
 
 (define FIN_MOVE
-  (makeTile "Pale Green"))
+  (makeTile FIN_TILE_COLOR))
 
 (define (playerform color)
   (center-pinhole (circle 50 "solid" color)))
@@ -76,10 +77,7 @@
             unscaled
    )))
 
-(define PLAYER1_COLOR "red")
-(define PLAYER2_COLOR "blue")
-(define PLAYER3_COLOR "green")
-(define PLAYER4_COLOR "purple")
+
 
 (define PLAYER1
   (rotate 180(playertoken_prefab PLAYER1_COLOR)))
@@ -95,7 +93,7 @@
 
 (define (WALL_PREFAB color)
   (scene+line
-   (rectangle  WALL_THICKNESS (* 2 TILE_SIZE)  "solid" (make-color 255 0 0 0))
+   (rectangle  WALL_THICKNESS (* 2 TILE_SIZE)  "solid" TRANSPARENT_COLOR)
    (/ WALL_THICKNESS 2)
    10
    (/ WALL_THICKNESS 2)
@@ -103,13 +101,13 @@
    (make-pen color 11 "solid" "round" "round")))
 
 (define WALL_VERT
-  (WALL_PREFAB "white"))
+  (WALL_PREFAB WALL_COLOR))
 
 (define WALL_HORZ
   (rotate 90 WALL_VERT))
 
 (define WALL_VERT_DENIED
-  (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" "red"))
+  (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" WALL_DENIED_COLOR))
 
 (define WALL_HORZ_DENIED
   (rotate 90 WALL_VERT_DENIED))
@@ -120,8 +118,8 @@
            (rotate -45 (rectangle TILE_SIZE (* 2 WALL_THICKNESS) "solid" "Misty Rose"))))
 
 (define MOVE_OK
-  (rotate 45 (beside/align "bottom" (rectangle (* 2 WALL_THICKNESS) (* 0.5 TILE_SIZE) "solid" "Light Green")
-           (rectangle (* 0.8 TILE_SIZE) (* 2 WALL_THICKNESS) "solid" "Light Green")
+  (rotate 45 (beside/align "bottom" (rectangle (* 2 WALL_THICKNESS) (* 0.5 TILE_SIZE) "solid" TILE_POS_COLOR)
+           (rectangle (* 0.8 TILE_SIZE) (* 2 WALL_THICKNESS) "solid" TILE_POS_COLOR)
            )))
 
 ;; -> Image
@@ -175,7 +173,7 @@
                  )]
          )
     (overlay/align "center" "center"
-     (center-pinhole (text (number->string remaining-walls) 30 "white"))
+     (center-pinhole (text (number->string remaining-walls) 30 TOKEN_TEXT_COLOR ))
      token
    )))
 
