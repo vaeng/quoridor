@@ -1,9 +1,10 @@
 #lang racket
 
-(provide (combine-out cell->NWCorner-x
-                      cell->NWCorner-y
-                      cell->NWCorner
-                      mouseXY->Cell
+(provide (combine-out
+          ;cell->NWCorner-x
+           ;           cell->NWCorner-y
+            ;          cell->NWCorner
+                  ;    mouseXY->Cell
                       possibleCells
                       movePlayer
                       addWall
@@ -12,7 +13,7 @@
                       changeCurrentPlayer
                       cellInList?
                       wallOK?
-                      clicked-area
+                      ;clicked-area
                       player_pos
                       neighbour
                       addUnsafeWall
@@ -33,32 +34,6 @@
 ;  #     # #      #      #      #      #   #  #    # 
 ;  #     # ###### ###### #      ###### #    #  ####  
                                                    
-
-; Cell -> (Number, Number)
-; given a cell, returns the render position of the
-; north-west corner
-(define (cell->NWCorner cell)
-  (list (* -1 TILE_SIZE (cell-x cell))
-        (* -1 TILE_SIZE (cell-y cell))))
-
-; Cell -> Number
-; given a cell, returns the render position of x-value
-; the north-west corner
-(define (cell->NWCorner-x cell)
-  (first (cell->NWCorner cell)))
-
-; Cell -> Number
-; given a cell, returns the render position of y-value
-; the north-west corner
-(define (cell->NWCorner-y cell)
-  (second (cell->NWCorner cell)))
-        
-
-; Number, Number -> Cell
-; convert mouse position to cell
-(define (mouseXY->Cell x y)
-  (make-cell (quotient x TILE_SIZE) (quotient y TILE_SIZE)))
-
 ; PlayerList cell id -> PlayerList
 ; Change the cell of player with certain id
 (define (changeCell players cell id)
@@ -474,39 +449,7 @@
   (make-posn (+ (posn-x posn) deltax)
              (+ (posn-y posn) deltay)))
 
-; number number -> (list Area, cell)
-; returns the Area that was clicked, according to this
-; scheme:
-; .
-(define (clicked-area x y)
-  (let* ([rel-x (modulo x TILE_SIZE)]
-        [rel-y (modulo y TILE_SIZE)]
-        [epsilon 0.1]
-        [limit-l (* TILE_SIZE epsilon)]
-        [limit-r (* TILE_SIZE (- 1 epsilon))]
-        [limit-o (* TILE_SIZE epsilon)]
-        [limit-u (* TILE_SIZE (- 1 epsilon))]
-        )
-  (cond
-    ; top edge
-    [(and (< limit-l rel-x limit-r) (< rel-y limit-o))
-     (list "h-edge" (mouseXY->Cell x y))]
-    ; left edge
-    [(and (< rel-x limit-l) (< limit-o rel-y limit-u))
-     (list "v-edge" (mouseXY->Cell x y))]
-    ; center
-    [(and (< limit-l rel-x limit-r) (< limit-o rel-y limit-u))
-     (list "center" (mouseXY->Cell x y))]
-    ; bottom edge
-    [(and (< limit-l rel-x limit-r) (< limit-u rel-y))
-     (list "h-edge" (mouseXY->Cell x (+ y TILE_SIZE)))]
-    ; right edge
-    [(and (< limit-r rel-x) (< limit-o rel-y limit-u))
-     (list "v-edge" (mouseXY->Cell (+ x TILE_SIZE) y))]
-    ; corners
-    [else (list "none" null)]
-    )
-  ))
+
 
 ; test worldstates
 (define almost-won-2

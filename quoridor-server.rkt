@@ -188,8 +188,13 @@
 ;; -----------------------------------------------------------------------------
 ;; START DES UNIVERSUMS
 
+(define custom-port
+ (string->number(first (string-split (with-input-from-file "server-port.txt"
+    (lambda () (read-string 150)))))))
+
+
 (universe UNIVERSE0
           (on-new add-world)
           (on-msg handle-messages)
           (on-disconnect handle-disconnect)
-          (port 1044))
+          (port custom-port))
