@@ -280,7 +280,7 @@
              (if (winningMove? (make_Move univ wrld m))
                  
                  ;; der Sieger steht fest, beende das Spiel und benachrichtige Gewinner und Verlierer
-                 (make-bundle (list (updateWorlds univ) 'finished (make_Move univ wrld m))
+                 (make-bundle (list (updateWorlds univ wrld) 'finished (make_Move univ wrld m))
                               (append (map (curryr make-mail (composeMail univ m wrld 'lost)) (get_Inactive_iWorlds univ)) 
                                       (list (make-mail wrld (composeMail univ m wrld 'won))))
                               '())
