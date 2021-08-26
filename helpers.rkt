@@ -402,6 +402,38 @@
 (define (removeCellFromList cell lst)
   (filter (curry (negate cell=?) cell) lst))
 
+; WorldState cell -> (list cell)
+; returns all cells that are connected to cell and not
+; blocked by walls and returns them
+(define (notBlocked ws origin)
+  (let* ([walls (ws-walls ws)]
+        [x (cell-x origin)]
+        [y (cell-y origin)]
+        [checkDirection (lambda (direction)
+                          (not (wallsBetween?
+                           (neighbour origin direction)
+                           origin walls)))]
+        )
+    (filter (lambda (x) x) 
+            (list
+             ; North
+             (if (and (< 0 y) (checkDirection "N"))
+                  (neighbour origin "N")
+                  #f)
+             ; South
+             (if (and (< y (sub1 BOARD_SIZE)) (checkDirection "S"))
+                  (neighbour origin "S")
+                  #f)
+             ; West
+             (if (and (< 0 x) (checkDirection "W"))
+                  (neighbour origin "W")
+                  #f)
+             ; East
+             (if (and (< x (sub1 BOARD_SIZE)) (checkDirection "E"))
+                  (neighbour origin "E")
+                  #f)))))
+
+
 ; Worldstate id -> bool
 ; returns false if a certain player can'r reach its goal line
 (define (wayNotBlocked? ws id candidates checked-candidates)
@@ -409,7 +441,7 @@
   (let* ([current (car (sort candidates #:key (curryr directDistance id) <))]
          [candidates-minus-current (removeCellFromList current candidates)]
          [new-state  (movePlayer ws current id)]
-         [pos-candidates (possibleCells (ws-players new-state) id new-state)]
+         [pos-candidates (notBlocked ws current)]
          [new-candidates (remove* checked-candidates pos-candidates cell=?)]
          [new-checked-candidates (combineCellLists checked-candidates (list current))]
          [next-candidates (combineCellLists candidates-minus-current new-candidates)])
@@ -475,3 +507,19 @@
     [else (list "none" null)]
     )
   ))
+
+; test worldstates
+(define almost-won-2
+  (make-ws (list (make-player 1 (make-cell 7 7) 8)
+                 (make-player 2 (make-cell 4 8) 10))
+           (list (make-wall (make-cell 7 7) "horizontal")
+                 (make-wall (make-cell 7 7) "vertical"))
+           1 "active-game" null))
+
+(define player-1-blocked
+  (make-ws (list (make-player 1 (make-cell 7 7) 8)
+                 (make-player 2 (make-cell 4 8) 10))
+           (list (make-wall (make-cell 7 7) "horizontal")
+                 (make-wall (make-cell 7 8) "horizontal")
+                 (make-wall (make-cell 7 7) "vertical"))
+           1 "active-game" null))
