@@ -335,8 +335,8 @@
             ;; Informiert alle im Zwei-Spieler-Spiel dass ein neues Spiel beginnt, der Verlierer fängt an
             [(equal? (length (get_Worlds univ)) 2)
              (make-bundle (list (updateWorlds univ wrld) '2players '())
-                          (append (list (make-mail (get_next_Inactive_iWorld univ)(list 'start2play 0 '())))
-                                  (list (make-mail (get_Active_iWorld univ) (list 'start2wait 0 '()))))
+                          (append (list (make-mail (get_next_Inactive_iWorld univ)(list 'start2play (get_ID_from_iWorld (get_next_Inactive_iWorld univ) univ) '())))
+                                  (list (make-mail (get_Active_iWorld univ) (list 'start2wait (get_ID_from_iWorld (get_Active_iWorld univ) univ) '()))))
                           '())]
             
             ;; Informiert alle im Vier-Spieler-Spiel das ein neues Spiel beginnt, der Spieler nach dem Gewinner ist dran
