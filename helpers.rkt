@@ -18,6 +18,9 @@
                       neighbour
                       addUnsafeWall
                       validConfig?
+                      directNeighbours?
+                      cell=?
+                      wallsBetween?
                       ))
 
 
@@ -152,6 +155,17 @@
 (define (neighbourList cell direction)
   (list (neighbour cell direction)))
 
+;; WorldState id id -> boolean
+;; checks if two players are right next to each other, without a boarder
+(define (directNeighbours? ws id1 id2) 
+  (let* ([players (ws-players ws)]
+         [pos1 (player_pos players id1)]
+         [pos2 (player_pos players id2)]
+         [player1neighbours (allNeighbours pos1)])
+    (and (cellInList? player1neighbours pos2)
+         (not (wallsBetween? pos1 pos2 (ws-walls ws))))
+        ))
+
 ; Cell1 Cell2 WallList -> Boolean
 ; checks if any Wall or Player is between given Cells
 (define (wallsOrPlayerBetween? cell1 cell2 players walls)
@@ -236,8 +250,8 @@
     [(string=? direction "W") (make-cell (sub1 x) y)]
     [(string=? direction "NE") (make-cell (add1 x) (sub1 y))]
     [(string=? direction "SW") (make-cell (sub1 x) (add1 y))]
-    [(string=? direction "NW") (make-cell (add1 x) (add1 y))]
-    [(string=? direction "SE") (make-cell (sub1 x) (sub1 y))]
+    [(string=? direction "NW") (make-cell (sub1 x) (sub1 y))]
+    [(string=? direction "SE") (make-cell (add1 x) (add1 y))]
     [(string=? direction "NN") (make-cell x (- y 2))]
     [(string=? direction "WW") (make-cell (- x 2) y)]
     [(string=? direction "SS") (make-cell x (+ y 2))]
@@ -457,7 +471,7 @@
                  (make-player 2 (make-cell 4 8) 10))
            (list (make-wall (make-cell 7 7) "horizontal")
                  (make-wall (make-cell 7 7) "vertical"))
-           1 "active-game" null))
+           1 'active-game null))
 
 (define player-1-blocked
   (make-ws (list (make-player 1 (make-cell 7 7) 8)
@@ -465,4 +479,4 @@
            (list (make-wall (make-cell 7 7) "horizontal")
                  (make-wall (make-cell 7 8) "horizontal")
                  (make-wall (make-cell 7 7) "vertical"))
-           1 "active-game" null))
+           1 'active-game null))

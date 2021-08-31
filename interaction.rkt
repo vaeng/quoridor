@@ -10,6 +10,7 @@
 (require "settings.rkt")
 (require "structures.rkt")
 (require "rendering.rkt")
+(require "colors.rkt")
 
 (require 2htdp/universe)
 (require 2htdp/image)
@@ -42,7 +43,7 @@
            (< (+ boarddimension xoffset) x)
            (< y yoffset)
            (< (+ boarddimension yoffset) y)) ws]
-      [(equal? gs "active-game")
+      [(equal? gs 'active-game)
        (cond [(mouse=? me "button-down") 
               (cond [(equal? area "center")
                      ;(movePlayer ws clicked-cell cp)
@@ -107,7 +108,8 @@
                                               (if (cellInList?
                                                    (possibleCells players id ws)
                                                    clicked-cell )
-                                                  empty-image ;MOVE_OK
+                                                  (place-move-preview id (player_pos players id)
+                                                                      clicked-cell) ;MOVE_OK
                                                   empty-image)
                                               0 0))]
                 [(equal? area "h-edge")
@@ -164,20 +166,28 @@
       [else ws]
       )
     ))
+;; cell cell number -> image
+;; renders the move-preview in the correct orientation
+(define (place-move-preview id player-cell clicked-cell)
+    (let ([token (cond [(= id 1) PLAYER1]
+                         [(= id 2) PLAYER2]
+                         [(= id 3) PLAYER3]
+                         [(= id 4) PLAYER4])])                         
+    (overlay/align "center" "center" token (square TILE_SIZE "solid" TRANSPARENT_COLOR))))
 
 
 ;; WorldState key-event -> WorldState
 ;; Test function to check interaction. Moves second player to clicked cell
 (define (key-press ws ke)
-  (cond [(and (key=? ke "s") (equal? (ws-gamestate ws) "main-menu"))
-         (changeGameState ws "active-game")]
-        [(and (key=? ke "1") (equal? (ws-gamestate ws) "active-game"))
+  (cond [(and (key=? ke "s") (equal? (ws-gamestate ws) 'main-menu))
+         (changeGameState ws 'active-game)]
+        [(and (key=? ke "1") (equal? (ws-gamestate ws) 'active-game))
          (changeCurrentPlayer ws 1)]
-        [(and (key=? ke "2") (equal? (ws-gamestate ws) "active-game"))
+        [(and (key=? ke "2") (equal? (ws-gamestate ws) 'active-game))
          (changeCurrentPlayer ws 2)]
-        [(and (key=? ke "3") (equal? (ws-gamestate ws) "active-game"))
+        [(and (key=? ke "3") (equal? (ws-gamestate ws) 'active-game))
          (changeCurrentPlayer ws 3)]
-        [(and (key=? ke "4") (equal? (ws-gamestate ws) "active-game"))
+        [(and (key=? ke "4") (equal? (ws-gamestate ws) 'active-game))
          (changeCurrentPlayer ws 4)]
         [(and (key=? ke "w") (equal? (ws-gamestate ws) 'wait-or-play))
          (make-package ws (list 'wait))]
