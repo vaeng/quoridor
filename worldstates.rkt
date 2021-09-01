@@ -14,9 +14,9 @@
 (define new-game-4
   (make-ws (list
             (make-player 1 (make-cell (/ (sub1 BOARD_SIZE) 2) 0) 5)
-            (make-player 2 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 5)
-            (make-player 3 (make-cell 0 (/ (sub1 BOARD_SIZE) 2)) 5)
-            (make-player 4 (make-cell (sub1 BOARD_SIZE) 4) 5))
+            (make-player 3 (make-cell (/ (sub1 BOARD_SIZE) 2) (sub1 BOARD_SIZE)) 5)
+            (make-player 4 (make-cell 0 (/ (sub1 BOARD_SIZE) 2)) 5)
+            (make-player 2 (make-cell (sub1 BOARD_SIZE) 4) 5))
            '() 1 'active-game (make-special 0 0 empty-image 0 0)))
 
 
