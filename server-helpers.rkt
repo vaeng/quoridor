@@ -97,9 +97,13 @@
 ;; UniverseState iWorld -> World
 ;; erzeuge ein World-Paar aus iWorld und ID
 (define (makeWorldPair univ iworld)
+  (let ([nextID
+         (cond [(= 1 (length (get_Worlds univ))) 3]
+               [(= 2 (length (get_Worlds univ))) 2]
+               [(= 3 (length (get_Worlds univ))) 4])])
   (cond
-    [(empty? (get_Worlds univ)) (cons iworld 1)]
-    [else (cons iworld (add1 (length (get_Worlds univ))))]))
+    [(empty? (get_Worlds univ)) (cons iworld 1)] 
+    [else (cons iworld nextID)])))
 
 ;; -----------------------------------------------------------------------------
 ;; ZUGRIFF AUF DEN STATUS
@@ -277,7 +281,7 @@
          (if (= (length (get_Worlds univ)) 4)
              
              ;; falls ja, prüfe, ob der übermittelte Zug den Sieg bringt
-             (if (winningMove? (make_Move univ wrld m))
+             (if (winningMove? (length (get_iWorlds univ)) (make_Move univ wrld m))
                  
                  ;; der Sieger steht fest, beende das Spiel und benachrichtige Gewinner und Verlierer
                  (make-bundle (list (updateWorlds univ wrld) 'finished (make_Move univ wrld m))
@@ -298,7 +302,7 @@
         [(equal? (get_State univ) '2players)
 
          ;; prüfe, ob der übermittlete Zug den Sieg bringt
-         (if (winningMove? (make_Move univ wrld m))
+         (if (winningMove? (length (get_iWorlds univ)) (make_Move univ wrld m))
                  
              ;; der Sieger steht fest, beende das Spiel und benachrichtige Gewinner und Verlierer
              (make-bundle (list (updateWorlds univ wrld) 'finished (make_Move univ wrld m))
@@ -356,9 +360,10 @@
       (make-bundle univ '() '())))
 
 ;; -----------------------------------------------------------------------------
-;; LastMove -> Boolean
-;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat
-(define (winningMove? lastMove)
+;; number LastMove -> Boolean
+;; Ermittelt ob der letzte Zug einen Gewinner hervorgebracht hat abhängig von der
+;; Anzahl der Spieler
+(define (winningMove? num_players lastMove)
   (let ([movetype (second lastMove)]
         [id (first lastMove)]
         [x (third lastMove)]
@@ -370,16 +375,25 @@
     (cond  
       ; type muss eine Spielerbewegung sein:
       [(equal? movetype 'player)
+       (if (= num_players 2)
        (cond
          ; Player 1 muss in letzte Zeile rücken
          [(and (= id 1) (= y lastrow)) #t]
-         ; Player 2 muss in erste Zeile rücken
-         [(and (= id 2) (= y firstrow)) #t]
-         ; Player 3 muss in letzte Reihe rücken
-         [(and (= id 3) (= x lastcolumn)) #t]
-         ; Player 4 muss in erste Reihe rücken
-         [(and (= id 4) (= x firstcolumn)) #t]
+         ; Player 2 hat id 3 muss in erste Zeile rücken
+         [(and (= id 3) (= y firstrow)) #t]
          ; safety if strange id was submitted:
-         [else #f])]
+         [else #f])
+       ;; 4 Spieler:
+       (cond
+         ; Player 1 muss in letzte Zeile rücken
+         [(and (= id 1) (= y lastrow)) #t]
+         ; Player 3 muss in erste Zeile rücken
+         [(and (= id 3) (= y firstrow)) #t]
+         ; Player 4 muss in letzte Reihe rücken
+         [(and (= id 4) (= x lastcolumn)) #t]
+         ; Player 2 muss in erste Reihe rücken
+         [(and (= id 2) (= x firstcolumn)) #t]
+         ; safety if strange id was submitted:
+         [else #f]))]
       [else #f]
       )))

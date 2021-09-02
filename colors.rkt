@@ -26,9 +26,9 @@
 
 ;; player colors
 (define PLAYER1_COLOR (make-color 153 48 23 255))
-(define PLAYER2_COLOR (make-color 74 81 222 255))
-(define PLAYER3_COLOR (make-color 58 119 56 255))
-(define PLAYER4_COLOR (make-color 119 35 92 255))
+(define PLAYER3_COLOR (make-color 74 81 222 255))
+(define PLAYER4_COLOR (make-color 58 119 56 255))
+(define PLAYER2_COLOR (make-color 119 35 92 255))
 
 ;; wall colors
 (define WALL_COLOR "white")

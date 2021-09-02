@@ -57,9 +57,14 @@
          [msgS2W (first message)]
          [max-players (length (ws-players ws))]
          [emptyspecial (make-special 0 0 empty-image 0 100000)]
-         [nextplayer (if (= lastplayer max-players)
-                         1
-                         (add1 lastplayer))]
+         [nextplayer (cond [(and (< max-players 4) (= lastplayer 1)) 3]
+                           [(and (< max-players 4) (= lastplayer 3)) 1]
+                           [(and (<= 4 max-players) (= lastplayer 1)) 2]
+                           [(and (<= 4 max-players) (= lastplayer 2)) 3]
+                           [(and (<= 4 max-players) (= lastplayer 3)) 4]
+                           [(and (<=  max-players) (= lastplayer 4)) 1]
+                           [(= lastplayer 0) 1]
+                           [else 1])]
          )
     (cond
       ; neither 2 or 4 players on server

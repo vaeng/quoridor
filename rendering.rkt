@@ -361,12 +361,12 @@
 (define (render-boarder image)
   ;(scene+
   (beside
-   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER4_COLOR)) (range BOARD_SIZE))))
+   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER2_COLOR)) (range BOARD_SIZE))))
    (above
-    (apply beside (map (lambda (x) (makeSquashedTilee PLAYER2_COLOR)) (range BOARD_SIZE)))
+    (apply beside (map (lambda (x) (makeSquashedTilee PLAYER3_COLOR)) (range BOARD_SIZE)))
     image
     (apply beside (map (lambda (x) (makeSquashedTilee PLAYER1_COLOR)) (range BOARD_SIZE))))
-   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER3_COLOR)) (range BOARD_SIZE)))))
+   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER4_COLOR)) (range BOARD_SIZE)))))
   )
 
 
@@ -495,15 +495,15 @@
               (if (directNeighbours? ws 1 currentplayer)
                   (curry render-perforations moves (player_pos players 1) POS_MOVE_COL)
                   identity)
-              ;; check player2
-              (if (directNeighbours? ws 2 currentplayer)
-                  (curry render-perforations moves (player_pos players 2) POS_MOVE_COL)
+              ;; check player3
+              (if (directNeighbours? ws 3 currentplayer)
+                  (curry render-perforations moves (player_pos players 3) POS_MOVE_COL)
                   identity)
-              (if (< 2 (length players))
+              (if (< 3 (length players))
                   (compose
                    ;; check player3
-                   (if (directNeighbours? ws 3 currentplayer)
-                       (curry render-perforations moves (player_pos players 3) POS_MOVE_COL)
+                   (if (directNeighbours? ws 2 currentplayer)
+                       (curry render-perforations moves (player_pos players 2) POS_MOVE_COL)
                        identity)
                    ;; check player4
                    (if (directNeighbours? ws 4 currentplayer)
@@ -519,14 +519,14 @@
                   (curry render-perforations moves (player_pos players 1) POS_MOVE_OTHER_COL)
                   identity)
               ;; check player2
-              (if (directNeighbours? ws 2 currentplayer)
-                  (curry render-perforations moves (player_pos players 2) POS_MOVE_OTHER_COL)
+              (if (directNeighbours? ws 3 currentplayer)
+                  (curry render-perforations moves (player_pos players 3) POS_MOVE_OTHER_COL)
                   identity)
-              (if (< 2 (length players))
+              (if (< 3 (length players))
                   (compose
                    ;; check player3
-                   (if (directNeighbours? ws 3 currentplayer)
-                       (curry render-perforations moves (player_pos players 3) POS_MOVE_OTHER_COL)
+                   (if (directNeighbours? ws 2 currentplayer)
+                       (curry render-perforations moves (player_pos players 2) POS_MOVE_OTHER_COL)
                        identity)
                    ;; check player4
                    (if (directNeighbours? ws 4 currentplayer)
@@ -858,14 +858,14 @@
                   (curry render-perforations twocells (player_pos players 1) perf-col)
                   identity)
               ;; check player2
-              (if (directNeighbours? ws 2 0)
-                  (curry render-perforations twocells (player_pos players 2) perf-col)
+              (if (directNeighbours? ws 3 0)
+                  (curry render-perforations twocells (player_pos players 3) perf-col)
                   identity)
               (if (< 3 (length players))
                   (compose
                    ;; check player3
-                   (if (directNeighbours? ws 3 0)
-                       (curry render-perforations twocells (player_pos players 3) perf-col)
+                   (if (directNeighbours? ws 2 0)
+                       (curry render-perforations twocells (player_pos players 2) perf-col)
                        identity)
                    ;; check player4
                    (if (directNeighbours? ws 4 0)
@@ -1039,9 +1039,14 @@
   (let* ([ws_reset_special (changeSpecial ws (make-special 0 0 empty-image 0 100000))]
          [lastplayer (ws-current-player ws)]
          [max-players (length (ws-players ws))]
-         [nextplayer (if (= lastplayer max-players)
-                         1
-                         (add1 lastplayer))]
+         [nextplayer (cond [(and (< max-players 4) (= lastplayer 1)) 3]
+                           [(and (< max-players 4) (= lastplayer 3)) 1]
+                           [(and (<= 4 max-players) (= lastplayer 1)) 2]
+                           [(and (<= 4 max-players) (= lastplayer 2)) 3]
+                           [(and (<= 4 max-players) (= lastplayer 3)) 4]
+                           [(and (<=  max-players) (= lastplayer 4)) 1]
+                           [(= lastplayer 0) 1]
+                           [else 1])]
          [0-player-corrected-reset (if (odd? (length (ws-players ws)))
                                        (make-ws
                                         (filter (lambda (player) (not (= 0 (player-id player))))
@@ -1156,7 +1161,7 @@
            (overlay/align "center" "center" (letter-gen "R") TILE))]
          [o-part TILE]
          [scaled-player1 (scale (/ o-size (image-height PLAYER1)) PLAYER1)]
-         [scaled-player2 (scale (/ o-size (image-height PLAYER2)) PLAYER2)]
+         [scaled-player2 (scale (/ o-size (image-height PLAYER3)) PLAYER3)]
          [oo-gap (* 0.5 (- (image-height rr-part) (* 2 (image-height o-part))))]
          [top-y (* 0.5 (+ oo-gap (image-height o-part))) ]
          [bottom-y (- top-y)]

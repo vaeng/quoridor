@@ -371,8 +371,8 @@
 (define (directDistance cell id)
   (cond
     [(= id 1) (- (sub1 BOARD_SIZE) (cell-y cell))]
-    [(= id 2) (cell-y cell)]
-    [(= id 3) (- (sub1 BOARD_SIZE) (cell-x cell))]
+    [(= id 3) (cell-y cell)]
+    [(= id 2) (- (sub1 BOARD_SIZE) (cell-x cell))]
     [(= id 4) (cell-x cell)]
     )
   )
@@ -447,8 +447,8 @@
   (and 
   ; check if all ways are clear:      
   (and (or (< (length (ws-players ws)) 1) (wayNotBlocked? ws 1 (list (player_pos Players 1)) '()))
-       (or (< (length (ws-players ws)) 2) (wayNotBlocked? ws 2 (list (player_pos Players 2)) '()))
-       (or (< (length (ws-players ws)) 3) (wayNotBlocked? ws 3 (list (player_pos Players 3)) '()))
+       (or (< (length (ws-players ws)) 2) (wayNotBlocked? ws 3 (list (player_pos Players 3)) '()))
+       (or (< (length (ws-players ws)) 3) (wayNotBlocked? ws 2 (list (player_pos Players 2)) '()))
        (or (< (length (ws-players ws)) 4) (wayNotBlocked? ws 4 (list (player_pos Players 4)) '()))
        )
   ; check if amounts of walls is correct:
@@ -468,14 +468,14 @@
 ; test worldstates
 (define almost-won-2
   (make-ws (list (make-player 1 (make-cell 7 7) 8)
-                 (make-player 2 (make-cell 4 8) 10))
+                 (make-player 3 (make-cell 4 8) 10))
            (list (make-wall (make-cell 7 7) "horizontal")
                  (make-wall (make-cell 7 7) "vertical"))
            1 'active-game null))
 
 (define player-1-blocked
   (make-ws (list (make-player 1 (make-cell 7 7) 8)
-                 (make-player 2 (make-cell 4 8) 10))
+                 (make-player 3 (make-cell 4 8) 10))
            (list (make-wall (make-cell 7 7) "horizontal")
                  (make-wall (make-cell 7 8) "horizontal")
                  (make-wall (make-cell 7 7) "vertical"))
