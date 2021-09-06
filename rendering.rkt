@@ -60,43 +60,46 @@
 
 
 
-(define (makeTile tilecolor)
+(define (makeTwoToneTile xmult ymult backgroundcolor tilecolor)
   (let* (                      
          [pull 0.8]
          [size (* 0.5 (- TILE_SIZE GAP_SIZE))]
+         [original-rounded-square (freeze
+                                   (overlay (polygon (list (make-pulled-point pull 45     ;leftpull ;langle
+                                                                              size 0
+                                                                              pull -45    ;rightpull ;range
+                                                                              )
+                                                           (make-pulled-point pull 45     ;leftpull ;langle
+                                                                              0 size
+                                                                              pull -45    ;rightpull ;range
+                                                                              )
+                                                           (make-pulled-point pull 45     ;leftpull ;langle
+                                                                              (- size) 0
+                                                                              pull -45    ;rightpull ;range
+                                                                              )
+                                                           (make-pulled-point pull 45     ;leftpull ;langle
+                                                                              0 (- size)
+                                                                              pull -45    ;rightpull ;range
+                                                                              ))
+                                                     "solid"
+                                                     tilecolor) (square TILE_SIZE "solid" backgroundcolor)))]
+         [cropped-corner (crop 0 0 (* 0.5 TILE_SIZE xmult) (* 0.5 TILE_SIZE ymult ) original-rounded-square)]
          )
-    (overlay
-     (polygon (list (make-pulled-point pull 45     ;leftpull ;langle
-                                       size 0
-                                       pull -45    ;rightpull ;range
-                                       )
-                    (make-pulled-point pull 45     ;leftpull ;langle
-                                       0 size
-                                       pull -45    ;rightpull ;range
-                                       )
-                    (make-pulled-point pull 45     ;leftpull ;langle
-                                       (- size) 0
-                                       pull -45    ;rightpull ;range
-                                       )
-                    (make-pulled-point pull 45     ;leftpull ;langle
-                                       0 (- size)
-                                       pull -45    ;rightpull ;range
-                                       ))
-              "solid"
-              tilecolor)
-     (square TILE_SIZE "solid" BACKGROUND_COLOR)
-     )))
+    (overlay (scale/xy xmult ymult original-rounded-square
+                       )
+             (rectangle (* xmult TILE_SIZE) (* ymult TILE_SIZE) "solid" backgroundcolor)
+             )))
 
-(define (makeSquashedTilee color)
-  (let* ([stroke_size (round (/ TILE_SIZE 4))]
-         [inner_width (- TILE_SIZE GAP_SIZE stroke_size )]
-         [inner_height (* 0.25 (- TILE_SIZE GAP_SIZE stroke_size ))]
-         )
-    (overlay/align "center" "center"
-                   (rectangle inner_width inner_height "outline"
-                              (make-pen color stroke_size "solid" "round" "round"))
-                   (rectangle  inner_width inner_height "solid" color)
-                   (rectangle TILE_SIZE (* 0.75 TILE_SIZE) "solid" BACKGROUND_COLOR))))
+(define (makeTile tilecolor)
+  (makeTwoToneTile 1 1 BACKGROUND_COLOR tilecolor))
+
+(define (makeSquashedTile color)
+  (let* ([normal-sized-square (makeTile color)]
+         [cropped-square (crop 0 0 (image-width normal-sized-square) (* 1.5 GAP_SIZE)
+                               normal-sized-square)])
+    (overlay (above cropped-square (rotate 180 cropped-square))
+             (rectangle TILE_SIZE (* 5 GAP_SIZE) "solid" TRANSPARENT_COLOR))
+    ))
 
 
 
@@ -144,17 +147,24 @@
   (rotate 90 (playertoken_prefab PLAYER4_COLOR)))
 
 (define (WALL_PREFAB color)
-  (scene+line
+  (overlay
    (rectangle  WALL_THICKNESS (* 2 TILE_SIZE)  "solid" TRANSPARENT_COLOR)
-   (/ WALL_THICKNESS 2)
-   10
-   (/ WALL_THICKNESS 2)
-   (- (* 2 TILE_SIZE) 10)
-   (make-pen color 11 "solid" "round" "round")))
+   (rotate 90 (let ([half-circle
+                     (crop 0 0 (* 0.5 WALL_THICKNESS) WALL_THICKNESS (circle (* 0.5 WALL_THICKNESS) "solid" color))])
+    (overlay/align/offset
+      "left" "bottom"
+     (overlay/align/offset
+     "left" "bottom"
+     half-circle (- (* 0.5 WALL_THICKNESS) 0.5) 0
+            (rectangle (- (* 2 TILE_SIZE) WALL_THICKNESS GAP_SIZE) WALL_THICKNESS "solid" color))
+            (+ (* 0.5 WALL_THICKNESS) (- (* 2 TILE_SIZE) WALL_THICKNESS GAP_SIZE) -1) 0
+            (rotate 180 half-circle)
+            )))))
 
 (define WALL_VERT
-  ;(WALL_PREFAB WALL_COLOR))
-  (rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" WALL_COLOR))
+  (WALL_PREFAB WALL_COLOR))
+  ;(rectangle WALL_THICKNESS (* 2 TILE_SIZE) "solid" WALL_COLOR))
+  
 
 (define WALL_HORZ
   (rotate 90 WALL_VERT))
@@ -278,12 +288,12 @@
          [y (second (cell->NWCorner (player-cell player)))]
          [id (player-id player)]
          [active-token (render-token (player-id player) (player-remaining-walls player))]
-         [passive-token (makeTile
-                         (cond [(= id 1) PLAYER1_COLOR]
-                               [(= id 2) PLAYER2_COLOR]
-                               [(= id 3) PLAYER3_COLOR]
-                               [(= id 4) PLAYER4_COLOR]
-                               ))])
+         [passive-token (makeTwoToneTile 1 1 TRANSPARENT_COLOR
+                                         (cond [(= id 1) PLAYER1_COLOR]
+                                               [(= id 2) PLAYER2_COLOR]
+                                               [(= id 3) PLAYER3_COLOR]
+                                               [(= id 4) PLAYER4_COLOR]
+                                               ))])
     (if (= id currentplayer)
         (overlay/xy
          active-token
@@ -361,12 +371,12 @@
 (define (render-boarder image)
   ;(scene+
   (beside
-   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER4_COLOR)) (range BOARD_SIZE))))
+   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTile PLAYER4_COLOR)) (range BOARD_SIZE))))
    (above
-    (apply beside (map (lambda (x) (makeSquashedTilee PLAYER2_COLOR)) (range BOARD_SIZE)))
+    (apply beside (map (lambda (x) (makeSquashedTile PLAYER2_COLOR)) (range BOARD_SIZE)))
     image
-    (apply beside (map (lambda (x) (makeSquashedTilee PLAYER1_COLOR)) (range BOARD_SIZE))))
-   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTilee PLAYER3_COLOR)) (range BOARD_SIZE)))))
+    (apply beside (map (lambda (x) (makeSquashedTile PLAYER1_COLOR)) (range BOARD_SIZE))))
+   (rotate 90 (apply beside (map (lambda (x) (makeSquashedTile PLAYER3_COLOR)) (range BOARD_SIZE)))))
   )
 
 
