@@ -1,35 +1,15 @@
 #lang racket
 
-(provide ws)
+(provide receive)
 
 (require "structures.rkt")
-(require "rendering.rkt")
-(require "settings.rkt")
 (require "helpers.rkt")
-(require "interaction.rkt")
 (require "worldstates.rkt")
 
 (require 2htdp/image)
-(require 2htdp/universe)
-(require test-engine/racket-tests)
-(require racket/struct)
-(require lang/posn)
 
 
-; ▄▄▄▄▄▄▄▄▄▄▄  ▄         ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
-;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
-;▐░█▀▀▀▀▀▀▀█░▌▐░▌       ▐░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌
-;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌
-;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▄▄▄▄▄▄▄█░▌
-;▐░▌       ▐░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌
-;▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░█▀▀▀▀█░█▀▀      ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░█▀▀▀▀█░█▀▀ 
-;▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌       ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌  
-; ▀▀▀▀▀▀█░█▀▀ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌  ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌      ▐░▌ 
-;        ▐░▌  ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░▌ ▐░░░░░░░░░░░▌▐░▌       ▐░▌
-;         ▀    ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀   ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀ 
-                                                                                                        
 
-;; Banner/Electronic: https://www.coolgenerator.com/ascii-text-generator
 
 ;  #####                                                                           
 ; #     #  ####  #    # #    # #    # #    # #  ####    ##   ##### #  ####  #    # 
@@ -134,42 +114,3 @@
                  (changeCurrentPlayer (changeGameState nextws 'losing-move) lastplayer)]
                 [else ws]))]
       )))
-
-
-
-
-; #     #                                             
-; #     # #    # # #    # ###### #####   ####  ###### 
-; #     # ##   # # #    # #      #    # #      #      
-; #     # # #  # # #    # #####  #    #  ####  #####  
-; #     # #  # # # #    # #      #####       # #      
-; #     # #   ## #  #  #  #      #   #  #    # #      
-;  #####  #    # #   ##   ###### #    #  ####  ######
-
-
-
-
-(define host-adress
-  (first (string-split (with-input-from-file "host-adress.txt"
-                         (lambda () (read-string 150))))))
-
-(define custom-port
-  (string->number(second (string-split (with-input-from-file "host-adress.txt"
-                                         (lambda () (read-string 150)))))))
-
-;ausgabe spielfeld im fenster
-(define (create-world)
-  (big-bang new-game-2
-    [to-draw render-state]
-    [on-mouse mouse-action]
-    [on-tick update-frame-and-anim-states] ;update-frame]
-    [on-key key-press]
-    [register host-adress]
-    [port custom-port]
-    [state #f]
-    [on-receive receive]
-    [name "Quoridor"]
-    )
-  )
-
-(create-world)

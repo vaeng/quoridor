@@ -7,10 +7,10 @@
                       ))
 
 (require "helpers.rkt")
-(require "settings.rkt")
 (require "structures.rkt")
-(require "rendering.rkt")
 (require "colors.rkt")
+(require "rendering-constants-and-prefabs.rkt")
+(require "rendering-helpers.rkt")
 
 (require 2htdp/universe)
 (require 2htdp/image)
@@ -166,6 +166,7 @@
       [else ws]
       )
     ))
+
 ;; cell cell number -> image
 ;; renders the move-preview in the correct orientation
 (define (place-move-preview id player-cell clicked-cell)
@@ -181,14 +182,6 @@
 (define (key-press ws ke)
   (cond [(and (key=? ke "s") (equal? (ws-gamestate ws) 'main-menu))
          (changeGameState ws 'active-game)]
-        [(and (key=? ke "1") (equal? (ws-gamestate ws) 'active-game))
-         (changeCurrentPlayer ws 1)]
-        [(and (key=? ke "2") (equal? (ws-gamestate ws) 'active-game))
-         (changeCurrentPlayer ws 2)]
-        [(and (key=? ke "3") (equal? (ws-gamestate ws) 'active-game))
-         (changeCurrentPlayer ws 3)]
-        [(and (key=? ke "4") (equal? (ws-gamestate ws) 'active-game))
-         (changeCurrentPlayer ws 4)]
         [(and (key=? ke "w") (equal? (ws-gamestate ws) 'wait-or-play))
          (make-package ws (list 'wait))]
         [(and (key=? ke "s") (equal? (ws-gamestate ws) 'wait-or-play))

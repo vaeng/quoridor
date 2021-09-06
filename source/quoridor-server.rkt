@@ -1,8 +1,7 @@
 #lang racket
 (require 2htdp/universe)
 
-(require "settings.rkt")
-(require "server-helpers.rkt")
+(require "secondary/server-helpers.rkt")
 
 (provide (combine-out add-world
                       handle-messages))
