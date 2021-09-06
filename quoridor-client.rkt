@@ -127,9 +127,11 @@
                 [(symbol=? msgS2W 'wait)
                  (changeCurrentPlayer (changeGameState nextws 'passive-move-before-passive-game) lastplayer)]
                 ; player has won
-                [(symbol=? msgS2W 'won) (changeGameState nextws 'won)]
+                [(symbol=? msgS2W 'won)
+                 (changeCurrentPlayer (changeGameState nextws 'winning-move) lastplayer)]
                 ; other player has won
-                [(symbol=? msgS2W 'lost) (changeGameState nextws 'lost)]
+                [(symbol=? msgS2W 'lost)
+                 (changeCurrentPlayer (changeGameState nextws 'losing-move) lastplayer)]
                 [else ws]))]
       )))
 

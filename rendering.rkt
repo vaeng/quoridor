@@ -1015,6 +1015,10 @@
                     (render-activate-active ws)]
                    [(equal? (ws-gamestate ws) 'activate-passive)
                     (render-activate-passive ws)]
+                   [(equal? (ws-gamestate ws) 'winning-move)
+                    (render-active-move ws)]
+                   [(equal? (ws-gamestate ws) 'losing-move)
+                    (render-passive-move-before-active-game ws)]
 
                    )
                  (rectangle WINDOW_SIZE_X
@@ -1120,6 +1124,20 @@
            (changeGameState
             ws_reset_special
             'passive-game))]
+      [(symbol=? (ws-gamestate ws)
+                 'winning-move)
+       (if (< (special-frame (ws-special ws)) MOVE_FRAMES)
+           (update-frame ws)
+           (changeGameState
+            ws_reset_special
+            'won))]
+      [(symbol=? (ws-gamestate ws)
+                 'losing-move)
+       (if (< (special-frame (ws-special ws)) MOVE_FRAMES)
+           (update-frame ws)
+           (changeGameState
+            ws_reset_special
+            'lost))]
 
       [else (update-frame ws)])
     ))
