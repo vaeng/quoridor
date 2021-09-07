@@ -1,4 +1,4 @@
-# Quoridor
+![logo](/uploads/ae78ba53793068f7e4f236dd9e112ceb/logo.png)
 
 ## Source files
 To run from source the client has to use `quoridor-client.rkt`, while the server must be started via `quoridor-server.rkt`.
