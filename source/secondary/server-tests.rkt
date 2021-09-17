@@ -2,7 +2,7 @@
 (require test-engine/racket-tests)
 (require 2htdp/universe)
 
-(require "quoridor-server.rkt")
+(require "../quoridor-server.rkt")
 (require "server-helpers.rkt")
 (require "settings.rkt")
 
